@@ -1,0 +1,8 @@
+# This file is machine-generated - editing it directly is not advised
+
+environment_id = "6c6e9e58-7a63-446d-86c9-a9a0e6ee2208"  # generated
+julia_version = "1.15.0-DEV"
+manifest_format = "2.2"
+project_hash = "71853c6197a6a7f222db0f1978c7cb232b87c5ee"
+
+[deps]
