@@ -1,7 +1,12 @@
 # Run corpus workloads in fresh processes, with tiering off and on:
 #
-#     julia runner/run.jl [--julia PATH] [--modes off,on] [--reps N] [--timeout S]
-#                         [--jobs N] [--out DIR] workload_or_dir...
+#     julia runner/run.jl [--julia PATH] [--master PATH] [--modes off,on] [--reps N]
+#                         [--timeout S] [--jobs N] [--out DIR] workload_or_dir...
+#
+# Modes `off` and `on` run the Julia under test (`--julia`) without and with tiering; mode
+# `master` runs the baseline build (`--master`, by default ~/dev/julia-master), which is
+# what comparisons should be against. Baseline results stay valid until master is updated,
+# so they need not be rerun with every build under test.
 #
 # Each run starts a new Julia process in an empty temporary directory, using the
 # environment named by the workload's `# env:` header line and any Julia options in its
@@ -17,7 +22,7 @@
 # time.
 
 const ROOT = dirname(@__DIR__)
-const MODES = Dict("off" => String[], "on" => ["--tiered=yes"])
+const MODES = Dict("off" => String[], "on" => ["--tiered=yes"], "master" => String[])
 const OUTPUT_LOCK = ReentrantLock()
 
 function header(path::String, key::String)
@@ -48,6 +53,7 @@ function workloads(args::Vector{String})
 end
 
 function run_one(julia, path, mode, rep, timeout, out)
+    julia = julia[mode == "master" ? 2 : 1]
     env = something(header(path, "env"), "base")
     name = workload_name(path)
     cells = joinpath(mktempdir(), "cells.tsv")
@@ -79,6 +85,7 @@ end
 
 function main(args)
     julia = joinpath(homedir(), "dev", "julia", "usr", "bin", "julia")
+    master = joinpath(homedir(), "dev", "julia-master", "usr", "bin", "julia")
     modes, reps, timeout, jobs = ["off", "on"], 1, 1800, 1
     out = joinpath(ROOT, "results", Libc.strftime("%Y%m%d-%H%M%S", time()))
     paths = String[]
@@ -86,6 +93,7 @@ function main(args)
     while i <= length(args)
         a = args[i]
         if a == "--julia"; julia = args[i += 1]
+        elseif a == "--master"; master = args[i += 1]
         elseif a == "--modes"; modes = split(args[i += 1], ',')
         elseif a == "--reps"; reps = parse(Int, args[i += 1])
         elseif a == "--timeout"; timeout = parse(Int, args[i += 1])
@@ -98,7 +106,7 @@ function main(args)
     mkpath(joinpath(out, "logs"))
     # Alternate modes within each repetition, so drift in machine load affects both alike.
     runs = [(path, mode, rep) for rep in 1:reps for path in workloads(paths) for mode in modes]
-    asyncmap(r -> run_one(julia, r..., timeout, out), runs; ntasks=jobs)
+    asyncmap(r -> run_one((julia, master), r..., timeout, out), runs; ntasks=jobs)
     println("results in ", out)
 end
 
