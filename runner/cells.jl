@@ -13,6 +13,8 @@
 #
 # where compile_s is compilation time on this thread (`Base.cumulative_compile_time_ns`) and
 # shown is a hash of what was displayed, to compare runs of deterministic workloads.
+# On Julia builds that count time per phase of compilation, the line goes on with the
+# change in each of those counters (see `phase_names`) over the cell.
 # A cell that throws is recorded with ok = false, its error is shown as the REPL would
 # (that is part of its time), and the session carries on, as a REPL session does: the
 # documentation of many packages shows errors on purpose.
@@ -63,12 +65,35 @@ function displays(code::String)
     return !endswith(s, ';')
 end
 
+# Process-wide compilation counters, where this Julia has them: the runtime's
+# `jl_compile_stats` (times in ns), then tiering's time spent widening and compiling loop
+# continuations, and the number compiled.
+const phase_names = ("infer_s", "infer_n", "emit_s", "emit_n", "emit_cis", "obj_s", "obj_n",
+    "llvm_s", "llvm_n", "link_s", "widen_s", "cont_s", "cont_n")
+const phase_ptr = try
+    cglobal(:jl_compile_stats, UInt64)
+catch
+    nothing
+end
+
+function phase_counters()
+    phase_ptr === nothing && return Float64[]
+    c = Float64[unsafe_load(phase_ptr, i) for i in 1:10]
+    t = isdefined(Base, :Tiered) && length(Base.Tiered.stats) >= 4 ? Base.Tiered.stats : zeros(Int, 4)
+    append!(c, (t[3], t[4], t[1]))
+    for i in (1, 3, 6, 8, 10, 11, 12)
+        c[i] /= 1e9
+    end
+    return c
+end
+
 function run_cell(cell::Cell, path::String)
     # Pad with newlines so that line numbers in errors and backtraces match the file.
     code = "\n"^(cell.line - 1) * cell.code
     show_value = displays(cell.code)
     stats = Base.gc_num()
     c0 = Base.cumulative_compile_time_ns()
+    p0 = phase_counters()
     t0 = time_ns()
     io = IOContext(IOBuffer(), :limit => true, :displaysize => (24, 80), :color => false)
     failure = nothing
@@ -87,6 +112,7 @@ function run_cell(cell::Cell, path::String)
     end
     t1 = time_ns()
     c1 = Base.cumulative_compile_time_ns()
+    phases = round.(phase_counters() .- p0; digits=4)
     alloc = Base.GC_Diff(Base.gc_num(), stats).allocd
     ok = failure === nothing
     shown = string(hash(take!(io.io)); base=16)
@@ -95,7 +121,7 @@ function run_cell(cell::Cell, path::String)
         Base.invokelatest(showerror, stderr, failure...)
         println(stderr)
     end
-    return (t1 - t0) / 1e9, (c1[1] - c0[1]) / 1e9, (c1[2] - c0[2]) / 1e9, alloc, ok, shown
+    return (t1 - t0) / 1e9, (c1[1] - c0[1]) / 1e9, (c1[2] - c0[2]) / 1e9, alloc, ok, shown, phases
 end
 
 function main(path::String, out::String)
@@ -103,9 +129,9 @@ function main(path::String, out::String)
     Base.cumulative_compile_timing(true)
     open(out, "a") do io
         for cell in read_cells(path)
-            wall, comp, recomp, alloc, ok, shown = run_cell(cell, path)
+            wall, comp, recomp, alloc, ok, shown, phases = run_cell(cell, path)
             println(io, join((name, cell.name, round(wall; digits=4), round(comp; digits=4),
-                round(recomp; digits=4), alloc, ok, shown), '\t'))
+                round(recomp; digits=4), alloc, ok, shown, phases...), '\t'))
             flush(io)
         end
     end
