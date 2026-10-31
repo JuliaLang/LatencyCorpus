@@ -8,7 +8,7 @@
 #
 # Cells are judged by class (see `classify`), each by its own measure: interactive cells by
 # perceptual bands, over-compilation by time and compile time, throughput as a pass or fail
-# regression check. Ratios are new / base, so below 1 is faster. Times for repeated runs are
+# check that no example gets more than 10% slower. Ratios are new / base, so below 1 is faster. Times for repeated runs are
 # averaged first.
 using Statistics, Printf
 
@@ -43,31 +43,36 @@ geomean(x) = isempty(x) ? NaN : exp(mean(log.(x)))
 family(w) = split(w, '/')[1] == "docs" ? w : first(split(w, '/'))
 
 # Each workload has a class in its `# kind:` header: `interactive`, `overcompile` or
-# `throughput`. A cell that spends more than a second running in the base mode (wall time minus
-# compile time) is judged as throughput whatever its workload's class, and a short cell in a
-# throughput workload as interactive: someone is waiting for it. Cells that only load packages
-# (`prelude` and `load`) are reported apart, since tiering can't change them.
-const CLASSES = Dict{String,String}()
+# `throughput`. The class is about what the user is doing and expects, not how long the code
+# happens to run: displaying something or a routine operation (a plot, a join, printing a table,
+# reading a CSV) should be snappy, while a non-trivial computation, typically one with a natural
+# knob that makes it run arbitrarily long, may take a while. Compute-bound cells inside other
+# workloads are marked by hand with `# throughput: <cell>` header lines. Cells that only load
+# packages (`prelude` and `load`) are reported apart, since tiering can't change them.
+const CLASSES = Dict{String,Tuple{String,Set{String}}}()
 
 function workload_class(w)
     get!(CLASSES, w) do
         dir = joinpath(@__DIR__, "..", "workloads")
         file = joinpath(dir, w * ".jl")
         isfile(file) || (file = joinpath(dir, "docs", w * ".jl"))
-        isfile(file) || return "interactive"
+        class, thr = "interactive", Set{String}()
+        isfile(file) || return (class, thr)
         for l in eachline(file)
-            m = match(r"^# kind: *(\w+)", l)
-            m === nothing || return String(m[1])
+            if (m = match(r"^# kind: *(\w+)", l)) !== nothing
+                class = String(m[1])
+            elseif (m = match(r"^# throughput: *(.*?)\s*$", l)) !== nothing
+                push!(thr, m[1])
+            end
         end
-        return "interactive"
+        return (class, thr)
     end
 end
 
-function classify(workload, cell, run)
+function classify(workload, cell)
     cell in ("prelude", "load") && return "loading"
-    run > 1.0 && return "throughput"
-    c = workload_class(workload)
-    return c in ("overcompile", "throughput") ? (c == "throughput" ? "interactive" : c) : "interactive"
+    class, thr = workload_class(workload)
+    return cell in thr ? "throughput" : class in ("overcompile", "throughput") ? class : "interactive"
 end
 
 band(t) = t < 0.3 ? 1 : t < 1.0 ? 2 : 3
@@ -116,15 +121,25 @@ function overcompile(cs, worst)
     end
 end
 
-# Throughput: a regression check, not something to optimize.
+# Throughput: no example may get more than 10% slower; getting faster on average is good. An
+# example is a whole throughput workload, or one throughput cell of another workload.
 function throughput(cs, worst)
-    a, b = sum(x[2] for x in cs; init=0.0), sum(x[3] for x in cs; init=0.0)
-    bad = sort!(filter(x -> x[3] > 1.03x[2] && x[3] - x[2] > 0.05, cs); by=x -> x[2] - x[3])
-    @printf("\nThroughput: %d cells, %s %.1fs, %s %.1fs, ratio %.3f: %s\n", length(cs), BASE[], a, NEW[], b, b / a,
-        b <= 1.03a ? "pass" : "FAIL")
-    println("  cells more than 3% slower: $(length(bad)); worst:")
-    for x in bad[1:min(worst, end)]
-        @printf("    %-80s %8.3f → %8.3f s  (%+.0f%%)\n", x[1], x[2], x[3], 100(x[3] / x[2] - 1))
+    ex = Dict{String,Tuple{Float64,Float64}}()
+    for (name, off, on) in cs
+        w, c = split(name, " | "; limit=2)
+        key = workload_class(w)[1] == "throughput" ? w : name
+        a, b = get(ex, key, (0.0, 0.0))
+        ex[key] = (a + off, b + on)
+    end
+    r = [b / a for (a, b) in values(ex)]
+    bad = sort!([(k, a, b) for (k, (a, b)) in ex if b > 1.1a]; by=x -> x[2] / x[3])
+    @printf("\nThroughput: %d examples (%d cells), geomean %s/%s %.3f, total %.1fs → %.1fs: %s\n",
+        length(ex), length(cs), NEW[], BASE[], geomean(r), sum(first, values(ex); init=0.0),
+        sum(last, values(ex); init=0.0), isempty(bad) ? "pass" : "FAIL ($(length(bad)) more than 10% slower)")
+    worse = sort!([(k, a, b) for (k, (a, b)) in ex if b > a]; by=x -> x[2] / x[3])
+    println("  slower examples:")
+    for (k, a, b) in worse[1:min(worst, end)]
+        @printf("    %-80s %8.3f → %8.3f s  (%+.0f%%)\n", k, a, b, 100(b / a - 1))
     end
 end
 
@@ -158,7 +173,7 @@ function main(dirs, worst=15)
         haskey(rows, kon) || continue
         a, b = rows[k], rows[kon]
         off, on = avg(a, r -> r.wall), avg(b, r -> r.wall)
-        class = classify(k[2], k[3], off - avg(a, r -> r.compile))
+        class = classify(k[2], k[3])
         push!(cells[class], ("$(k[2]) | $(k[3])", off, on, avg(a, r -> r.compile), avg(b, r -> r.compile)))
         all(r -> r.ok, a) && all(r -> r.ok, b) && a[1].shown != b[1].shown && push!(mismatches, "$(k[2]) | $(k[3])")
     end

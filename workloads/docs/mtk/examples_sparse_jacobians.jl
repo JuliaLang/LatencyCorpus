@@ -1,6 +1,9 @@
 # env: sciml
 # kind: overcompile
 # source: examples/sparse_jacobians.md
+# throughput: 4
+# throughput: 5
+# throughput: 6
 
 # %% 1
 using OrdinaryDiffEq, ModelingToolkit

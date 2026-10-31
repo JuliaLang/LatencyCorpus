@@ -1,6 +1,7 @@
 # env: sciml
 # kind: interactive
 # source: tutorials/sde_example.md
+# throughput: 14
 
 # %% 1
 import StochasticDiffEq as SDE

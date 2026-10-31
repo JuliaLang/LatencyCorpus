@@ -1,6 +1,10 @@
 # env: plots
 # kind: interactive
 # source: animations.md
+# throughput: 2
+# throughput: 3
+# throughput: 4
+# throughput: 5
 
 # %% prelude
 using Plots

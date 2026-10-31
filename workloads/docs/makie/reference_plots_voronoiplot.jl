@@ -1,6 +1,7 @@
 # env: makie
 # kind: interactive
 # source: reference/plots/voronoiplot.md
+# throughput: 6
 
 # %% prelude
 using CairoMakie

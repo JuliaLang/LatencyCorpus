@@ -1,6 +1,7 @@
 # env: makie
 # kind: interactive
 # source: reference/plots/heatmap.md
+# throughput: 5
 
 # %% prelude
 using CairoMakie

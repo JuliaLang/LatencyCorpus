@@ -1,6 +1,7 @@
 # env: sciml
 # kind: overcompile
 # about: Build a sizeable acausal model with ModelingToolkit, then sweep its parameters.
+# throughput: sweep
 
 # %% load
 using ModelingToolkit, OrdinaryDiffEq

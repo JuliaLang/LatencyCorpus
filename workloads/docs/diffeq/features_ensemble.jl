@@ -1,6 +1,7 @@
 # env: sciml
 # kind: interactive
 # source: features/ensemble.md
+# throughput: 13
 
 # %% 1
 import DifferentialEquations as DE

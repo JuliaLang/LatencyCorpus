@@ -1,6 +1,8 @@
 # env: plots
 # kind: interactive
 # source: index.md
+# throughput: 2
+# throughput: 3
 
 # %% prelude
 using Plots

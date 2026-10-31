@@ -1,6 +1,12 @@
 # env: sciml
 # kind: interactive
 # source: tutorials/advanced_ode_example.md
+# throughput: 5
+# throughput: 6
+# throughput: 7
+# throughput: 8
+# throughput: 9
+# throughput: 10
 
 # %% 1
 import DifferentialEquations as DE, LinearAlgebra

@@ -1,6 +1,7 @@
 # env: sciml
 # kind: interactive
 # source: examples/outer_solar_system.md
+# throughput: 3
 
 # %% 1
 import OrdinaryDiffEq as ODE

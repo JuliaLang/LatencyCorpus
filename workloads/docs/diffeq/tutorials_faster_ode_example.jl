@@ -1,6 +1,29 @@
 # env: sciml
 # kind: interactive
 # source: tutorials/faster_ode_example.md
+# throughput: 2
+# throughput: 3
+# throughput: 5
+# throughput: 6
+# throughput: 7
+# throughput: 10
+# throughput: 11
+# throughput: 13
+# throughput: 14
+# throughput: 16
+# throughput: 20
+# throughput: 22
+# throughput: 24
+# throughput: 26
+# throughput: 27
+# throughput: 28
+# throughput: 29
+# throughput: 30
+# throughput: 31
+# throughput: 32
+# throughput: 33
+# throughput: 34
+# throughput: 35
 
 # %% 1
 function lorenz(u, p, t)

@@ -1,6 +1,9 @@
 # env: sciml
 # kind: overcompile
 # source: tutorials/ode_modeling.md
+# throughput: 17
+# throughput: 18
+# throughput: 19
 
 # %% 1
 using ModelingToolkit
