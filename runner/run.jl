@@ -15,14 +15,26 @@
 # (startup, package loading and exit included). Results are appended to
 # <out>/results.tsv with the columns
 #
-#     mode  rep  workload  cell  wall_s  compile_s  recompile_s  alloc_bytes  ok  shown
+#     mode  rep  workload  cell  wall_s  compile_s  recompile_s  alloc_bytes  ok  shown  load_s
 #
 # and each run's output goes to <out>/logs/<workload>-<mode>-<rep>.log. `--jobs` runs that
 # many processes at once, which is for checking that workloads run: timings need one at a
 # time.
 
 const ROOT = dirname(@__DIR__)
-const MODES = Dict("off" => String[], "on" => ["--tiered=yes"], "master" => String[])
+# Each mode: Julia options and environment variables. A mode name ending in `+log` runs the
+# mode before it with tiering's compile log (`JULIA_TIER_LOG`) written to
+# <out>/compile/<workload>-<mode>-<rep>.tsv (see compilelog.jl).
+const TIERED = ["--tiered=yes"]
+const MODES = Dict(
+    "off" => (String[], Dict{String,String}()),
+    "on" => (TIERED, Dict{String,String}()),
+    "master" => (String[], Dict{String,String}()),
+    "delay500" => (TIERED, Dict("JULIA_JIT_DELAY" => "500")),
+    "delay1000" => (TIERED, Dict("JULIA_JIT_DELAY" => "1000")),
+    "cost" => (TIERED, Dict("JULIA_TIER_CI_COST" => "30000")),
+    "cost1000" => (TIERED, Dict("JULIA_TIER_CI_COST" => "30000", "JULIA_JIT_DELAY" => "1000")),
+)
 const OUTPUT_LOCK = ReentrantLock()
 
 function header(path::String, key::String)
@@ -53,20 +65,24 @@ function workloads(args::Vector{String})
 end
 
 function run_one(julia, path, mode, rep, timeout, out)
-    julia = julia[mode == "master" ? 2 : 1]
+    base_mode = replace(mode, r"\+log$" => "")
+    julia = julia[base_mode == "master" ? 2 : 1]
+    opts, mode_env = MODES[base_mode]
     env = something(header(path, "env"), "base")
     name = workload_name(path)
     cells = joinpath(mktempdir(), "cells.tsv")
     log = joinpath(out, "logs", replace(name, '/' => '-') * "-$mode-$rep.log")
     args = split(something(header(path, "args"), ""))
-    cmd = `timeout $timeout $julia --startup-file=no $(MODES[mode]) $args --project=$(joinpath(ROOT, "envs", env))
+    cmd = `timeout $timeout $julia --startup-file=no $opts $args --project=$(joinpath(ROOT, "envs", env))
            $(joinpath(ROOT, "runner", "cells.jl")) $(abspath(path)) $cells`
     cmd = setenv(cmd, merge(ENV, Dict(
         "JULIA_DEPOT_PATH" => joinpath(ROOT, "depot"),
         "GKSwstype" => "100",            # GR without a display
         "JULIA_PKG_PRECOMPILE_AUTO" => "0",
         "CORPUS_DATA" => joinpath(ROOT, "data"),
-    )); dir=dirname(cells))
+    ), mode_env, endswith(mode, "+log") ? Dict("JULIA_TIER_LOG" =>
+        joinpath(out, "compile", replace(name, '/' => '-') * "-$base_mode-$rep.tsv")) : Dict());
+        dir=dirname(cells))
     t0 = time()
     proc = run(pipeline(ignorestatus(cmd); stdout=log, stderr=log))
     wall = time() - t0
@@ -80,7 +96,7 @@ function run_one(julia, path, mode, rep, timeout, out)
         end
         println(io, join((mode, rep, name, "process", round(wall; digits=4), "", "", "", status, ""), '\t'))
     end
-    @lock OUTPUT_LOCK println(rpad(name, 48), " ", rpad(mode, 4), "rep $rep  ", lpad(round(wall; digits=2), 7), "s  ", status)
+    @lock OUTPUT_LOCK println(rpad(name, 48), " ", rpad(mode, 9), "rep $rep  ", lpad(round(wall; digits=2), 7), "s  ", status)
 end
 
 function main(args)
@@ -104,6 +120,7 @@ function main(args)
         i += 1
     end
     mkpath(joinpath(out, "logs"))
+    any(m -> endswith(m, "+log"), modes) && mkpath(joinpath(out, "compile"))
     # Alternate modes within each repetition, so drift in machine load affects both alike.
     runs = [(path, mode, rep) for rep in 1:reps for path in workloads(paths) for mode in modes]
     asyncmap(r -> run_one((julia, master), r..., timeout, out), runs; ntasks=jobs)

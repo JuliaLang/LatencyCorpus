@@ -9,10 +9,12 @@
 # waits for. Values that can be shown as PNG, such as plots, are rendered as PNG instead,
 # as an IDE or notebook displays them. For each cell this appends a line to the results file:
 #
-#     workload  cell  wall_s  compile_s  recompile_s  alloc_bytes  ok  shown
+#     workload  cell  wall_s  compile_s  recompile_s  alloc_bytes  ok  shown  load_s
 #
-# where compile_s is compilation time on this thread (`Base.cumulative_compile_time_ns`) and
-# shown is a hash of what was displayed, to compare runs of deterministic workloads.
+# where compile_s is compilation time on this thread (`Base.cumulative_compile_time_ns`),
+# shown is a hash of what was displayed, to compare runs of deterministic workloads, and
+# load_s is the time spent in the cell's top-level `using` and `import` statements, which
+# tiering cannot change.
 # On Julia builds that count time per phase of compilation, the line goes on with the
 # change in each of those counters (see `phase_names`) over the cell.
 # A cell that throws is recorded with ok = false, its error is shown as the REPL would
@@ -20,6 +22,8 @@
 # documentation of many packages shows errors on purpose.
 # The global random number generator is seeded before the first cell, so that workloads
 # that draw random numbers take the same path, and compile the same code, in every run.
+# Where Julia has a JIT delay (`JULIA_JIT_DELAY`), it starts with each cell, as it does with
+# each REPL input.
 
 import REPL
 import Random
@@ -90,6 +94,29 @@ function phase_counters()
     return c
 end
 
+const start_jit_delay = isdefined(Base, :Tiered) && isdefined(Base.Tiered, :start_jit_delay) ?
+    Base.Tiered.start_jit_delay : () -> nothing
+
+isload(ex) = Meta.isexpr(ex, (:using, :import))
+
+# Evaluate `code` as `include_string` with the REPL's soft scope would, a top-level
+# statement at a time, and return its value and the time spent in `using` and `import`.
+function eval_cell(code::String, path::String)
+    ex = Meta.parseall(code; filename=path)
+    value, load = nothing, 0.0
+    for st in ex.args
+        if st isa LineNumberNode
+            continue
+        elseif Meta.isexpr(st, :error) || Meta.isexpr(st, :incomplete)
+            Core.eval(Main, st)  # throws the parse error
+        end
+        t = time_ns()
+        value = Core.eval(Main, REPL.softscope(st))
+        isload(st) && (load += (time_ns() - t) / 1e9)
+    end
+    return value, load
+end
+
 function run_cell(cell::Cell, path::String)
     # Pad with newlines so that line numbers in errors and backtraces match the file.
     code = "\n"^(cell.line - 1) * cell.code
@@ -100,8 +127,10 @@ function run_cell(cell::Cell, path::String)
     t0 = time_ns()
     io = IOContext(IOBuffer(), :limit => true, :displaysize => (24, 80), :color => false)
     failure = nothing
+    load = 0.0
+    start_jit_delay()
     try
-        value = include_string(REPL.softscope, Main, code, path)
+        value, load = eval_cell(code, path)
         if show_value && value !== nothing
             # Like the REPL, display in the latest world, which sees what the cell loaded.
             # Render what has an image form (plots, figures) as an IDE or notebook would.
@@ -124,7 +153,7 @@ function run_cell(cell::Cell, path::String)
         Base.invokelatest(showerror, stderr, failure...)
         println(stderr)
     end
-    return (t1 - t0) / 1e9, (c1[1] - c0[1]) / 1e9, (c1[2] - c0[2]) / 1e9, alloc, ok, shown, phases
+    return (t1 - t0) / 1e9, (c1[1] - c0[1]) / 1e9, (c1[2] - c0[2]) / 1e9, alloc, ok, shown, load, phases
 end
 
 function main(path::String, out::String)
@@ -133,9 +162,9 @@ function main(path::String, out::String)
     Random.seed!(0)
     open(out, "a") do io
         for cell in read_cells(path)
-            wall, comp, recomp, alloc, ok, shown, phases = run_cell(cell, path)
+            wall, comp, recomp, alloc, ok, shown, load, phases = run_cell(cell, path)
             println(io, join((name, cell.name, round(wall; digits=4), round(comp; digits=4),
-                round(recomp; digits=4), alloc, ok, shown, phases...), '\t'))
+                round(recomp; digits=4), alloc, ok, shown, round(load; digits=4), phases...), '\t'))
             flush(io)
         end
     end

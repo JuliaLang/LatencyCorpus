@@ -13,10 +13,11 @@
 using Statistics, Printf
 
 struct Row
-    wall::Float64
+    wall::Float64     # excluding `load`
     compile::Float64
     ok::Bool
     shown::String
+    load::Float64     # time in the cell's `using` and `import` statements, where recorded
 end
 
 const BASE = Ref("off")
@@ -31,9 +32,13 @@ function load(dirs)
         if cell == "process"
             status[(mode, workload)] = f[9]
         end
+        # Runs since the harness recorded load time have it in column 11, before the
+        # (optional, 13) phase counters; earlier runs went straight on to the counters.
+        hasload = cell != "process" && length(f) in (11, 24)
+        load = hasload ? something(tryparse(Float64, f[11]), 0.0) : 0.0
         push!(get!(rows, (mode, workload, cell), Row[]),
-            Row(parse(Float64, f[5]), something(tryparse(Float64, f[6]), 0.0), f[9] in ("true", "ok"),
-                length(f) >= 10 ? f[10] : ""))
+            Row(parse(Float64, f[5]) - load, something(tryparse(Float64, f[6]), 0.0), f[9] in ("true", "ok"),
+                length(f) >= 10 ? f[10] : "", load))
     end
     return rows, status
 end
@@ -181,8 +186,11 @@ function main(dirs, worst=15)
     overcompile(cells["overcompile"], worst)
     throughput(cells["throughput"], worst)
     ld = cells["loading"]
-    @printf("\nLoading cells (tiering can't change these): %d, %s %.1fs, %s %.1fs\n",
-        length(ld), BASE[], sum(x[2] for x in ld; init=0.0), NEW[], sum(x[3] for x in ld; init=0.0))
+    lb = sum(avg(v, r -> r.load) for (k, v) in rows if k[1] == BASE[] && k[3] != "process"; init=0.0)
+    ln = sum(avg(v, r -> r.load) for (k, v) in rows if k[1] == NEW[] && k[3] != "process"; init=0.0)
+    @printf("\nLoading (tiering can't change this): %d loading cells, %s %.1fs, %s %.1fs; `using` and `import` in other cells, %s %.1fs, %s %.1fs (left out of their times)\n",
+        length(ld), BASE[], sum(x[2] for x in ld; init=0.0), NEW[], sum(x[3] for x in ld; init=0.0),
+        BASE[], lb, NEW[], ln)
     failed = [w for w in workloads if get(status, (NEW[], w), "") != get(status, (BASE[], w), "")]
     println("\nWorkloads whose status differs between modes: ", isempty(failed) ? "none" : "")
     for w in failed

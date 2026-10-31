@@ -44,7 +44,9 @@ function main(args)
     for dir in dirs, l in eachline(joinpath(dir, "results.tsv"))
         f = split(l, '\t')
         (f[1] == "mode" || f[4] in ("process", "load")) && continue
-        push!(get!(t, (f[1], f[3], f[4]), Float64[]), parse(Float64, f[5]))
+        # leave out time in `using` and `import`, where recorded (see summarize.jl)
+        load = length(f) in (11, 24) ? something(tryparse(Float64, f[11]), 0.0) : 0.0
+        push!(get!(t, (f[1], f[3], f[4]), Float64[]), parse(Float64, f[5]) - load)
     end
     rows = []
     for ((m, w, c), a) in t
