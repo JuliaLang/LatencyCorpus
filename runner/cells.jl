@@ -18,8 +18,11 @@
 # A cell that throws is recorded with ok = false, its error is shown as the REPL would
 # (that is part of its time), and the session carries on, as a REPL session does: the
 # documentation of many packages shows errors on purpose.
+# The global random number generator is seeded before the first cell, so that workloads
+# that draw random numbers take the same path, and compile the same code, in every run.
 
 import REPL
+import Random
 
 struct Cell
     name::String
@@ -127,6 +130,7 @@ end
 function main(path::String, out::String)
     name = joinpath(basename(dirname(abspath(path))), splitext(basename(path))[1])
     Base.cumulative_compile_timing(true)
+    Random.seed!(0)
     open(out, "a") do io
         for cell in read_cells(path)
             wall, comp, recomp, alloc, ok, shown, phases = run_cell(cell, path)
