@@ -1,5 +1,5 @@
 # env: base
-# kind: latency
+# kind: interactive
 # about: A script that defines many small helpers and calls each a few times.
 
 # %% helpers

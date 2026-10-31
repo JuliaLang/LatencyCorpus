@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: overcompile
 # source: tutorials/linear_analysis.md
 
 # %% 1

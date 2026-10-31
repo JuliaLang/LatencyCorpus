@@ -1,5 +1,5 @@
 # env: base
-# kind: mixed
+# kind: interactive
 # about: Puzzle-style script: parse a grid, find shortest paths with BFS and Dijkstra.
 
 # %% input

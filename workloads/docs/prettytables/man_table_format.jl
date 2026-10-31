@@ -1,5 +1,5 @@
 # env: data
-# kind: unknown
+# kind: interactive
 # source: man/table_format.md
 
 # %% 1

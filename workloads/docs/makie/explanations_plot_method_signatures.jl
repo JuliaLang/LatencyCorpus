@@ -1,5 +1,5 @@
 # env: makie
-# kind: unknown
+# kind: interactive
 # source: explanations/plot_method_signatures.md
 
 # %% prelude

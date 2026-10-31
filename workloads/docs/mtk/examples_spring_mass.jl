@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: overcompile
 # source: examples/spring_mass.md
 
 # %% 1

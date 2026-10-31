@@ -1,5 +1,5 @@
 # env: data
-# kind: unknown
+# kind: interactive
 # source: lib/metadata.md
 
 # %% 1

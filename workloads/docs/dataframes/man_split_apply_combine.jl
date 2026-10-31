@@ -1,5 +1,5 @@
 # env: data
-# kind: unknown
+# kind: interactive
 # source: man/split_apply_combine.md
 
 # %% 1

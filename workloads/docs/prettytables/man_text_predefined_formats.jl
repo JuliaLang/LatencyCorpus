@@ -1,5 +1,5 @@
 # env: data
-# kind: unknown
+# kind: interactive
 # source: man/text/predefined_formats.md
 
 # %% 1

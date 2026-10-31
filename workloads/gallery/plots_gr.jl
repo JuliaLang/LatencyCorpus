@@ -1,5 +1,5 @@
 # env: plots
-# kind: unknown
+# kind: interactive
 # source: Plots.jl src/examples.jl (Plots._examples), GR backend
 
 # %% load

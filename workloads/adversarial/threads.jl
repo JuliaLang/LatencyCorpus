@@ -1,5 +1,5 @@
 # env: base
-# kind: mixed
+# kind: throughput
 # args: --threads=4
 # about: Threaded loops and tasks: interpreted and compiled code run on several threads.
 

@@ -1,5 +1,5 @@
 # env: data
-# kind: unknown
+# kind: interactive
 # source: man/text/text_backend.md
 
 # %% 1

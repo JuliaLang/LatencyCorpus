@@ -1,5 +1,5 @@
 # env: makie
-# kind: unknown
+# kind: interactive
 # source: explanations/theming/predefined_themes.md
 
 # %% prelude

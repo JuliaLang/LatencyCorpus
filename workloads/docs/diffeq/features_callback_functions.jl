@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: features/callback_functions.md
 
 # %% 1

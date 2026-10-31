@@ -1,5 +1,5 @@
 # env: makie
-# kind: unknown
+# kind: interactive
 # source: reference/blocks/label.md
 
 # %% prelude

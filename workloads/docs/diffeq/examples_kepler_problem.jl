@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: examples/kepler_problem.md
 
 # %% 1

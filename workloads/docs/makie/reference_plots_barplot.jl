@@ -1,5 +1,5 @@
 # env: makie
-# kind: unknown
+# kind: interactive
 # source: reference/plots/barplot.md
 
 # %% prelude

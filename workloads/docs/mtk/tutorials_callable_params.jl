@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: overcompile
 # source: tutorials/callable_params.md
 
 # %% 1

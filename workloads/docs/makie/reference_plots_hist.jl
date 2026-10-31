@@ -1,5 +1,5 @@
 # env: makie
-# kind: unknown
+# kind: interactive
 # source: reference/plots/hist.md
 
 # %% prelude

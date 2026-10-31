@@ -1,5 +1,5 @@
 # env: data
-# kind: latency
+# kind: interactive
 # about: Web-service session: serve JSON on localhost, query it, parse and tabulate results.
 
 # %% load

@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: tutorials/rode_example.md
 
 # %% 1

@@ -1,5 +1,5 @@
 # env: base
-# kind: latency
+# kind: interactive
 # about: Mistakes at the REPL: errors with stack traces are shown, and the session goes on.
 
 # %% bounds

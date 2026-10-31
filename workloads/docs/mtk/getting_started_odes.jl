@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: overcompile
 # source: getting_started/odes.md
 
 # %% 1

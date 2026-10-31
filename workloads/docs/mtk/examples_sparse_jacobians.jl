@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: overcompile
 # source: examples/sparse_jacobians.md
 
 # %% 1

@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: examples/outer_solar_system.md
 
 # %% 1

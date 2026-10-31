@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: features/diffeq_arrays.md
 
 # %% 1

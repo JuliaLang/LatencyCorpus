@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: solvers/nonautonomous_linear_ode.md
 
 # %% 1

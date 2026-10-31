@@ -1,5 +1,5 @@
 # env: base
-# kind: mixed
+# kind: interactive
 # about: Recursive and memoized computations, as in puzzle solutions.
 
 # %% fib

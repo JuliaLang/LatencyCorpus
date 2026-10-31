@@ -1,5 +1,5 @@
 # env: makie
-# kind: unknown
+# kind: interactive
 # source: tutorials/inset-plot-tutorial.md
 
 # %% prelude

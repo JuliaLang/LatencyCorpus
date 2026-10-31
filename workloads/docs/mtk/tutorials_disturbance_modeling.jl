@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: overcompile
 # source: tutorials/disturbance_modeling.md
 
 # %% 1

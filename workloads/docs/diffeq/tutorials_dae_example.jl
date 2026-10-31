@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: tutorials/dae_example.md
 
 # %% 1

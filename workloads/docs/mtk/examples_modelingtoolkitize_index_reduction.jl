@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: overcompile
 # source: examples/modelingtoolkitize_index_reduction.md
 
 # %% 1

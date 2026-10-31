@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: examples/conditional_dosing.md
 
 # %% 1

@@ -1,5 +1,5 @@
 # env: makie
-# kind: unknown
+# kind: interactive
 # source: tutorials/aspect-tutorial.md
 
 # %% prelude

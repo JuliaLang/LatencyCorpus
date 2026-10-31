@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: tutorials/faster_ode_example.md
 
 # %% 1

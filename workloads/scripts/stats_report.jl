@@ -1,5 +1,5 @@
 # env: base
-# kind: latency
+# kind: interactive
 # about: Data-analysis script with only stdlibs: summary statistics, regression, a report.
 
 # %% data

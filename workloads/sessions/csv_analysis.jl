@@ -1,5 +1,5 @@
 # env: data
-# kind: latency
+# kind: interactive
 # about: Typical CSV session: write a file, read it back, clean, summarize, join, write.
 
 # %% load

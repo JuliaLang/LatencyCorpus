@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: overcompile
 # source: tutorials/ode_modeling.md
 
 # %% 1

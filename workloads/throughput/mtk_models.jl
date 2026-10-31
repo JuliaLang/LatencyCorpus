@@ -1,5 +1,5 @@
 # env: sciml
-# kind: throughput
+# kind: overcompile
 # about: Build a sizeable acausal model with ModelingToolkit, then sweep its parameters.
 
 # %% load

@@ -1,5 +1,5 @@
 # env: base
-# kind: mixed
+# kind: interactive
 # about: Log processing with regular expressions and string building.
 
 # %% log

@@ -1,5 +1,5 @@
 # env: data
-# kind: unknown
+# kind: interactive
 # source: man/reshaping_and_pivoting.md
 
 # %% 1

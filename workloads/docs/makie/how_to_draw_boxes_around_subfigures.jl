@@ -1,5 +1,5 @@
 # env: makie
-# kind: unknown
+# kind: interactive
 # source: how-to/draw-boxes-around-subfigures.md
 
 # %% prelude

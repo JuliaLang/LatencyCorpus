@@ -1,5 +1,5 @@
 # env: plots
-# kind: unknown
+# kind: interactive
 # source: series_types/histogram.md
 
 # %% prelude

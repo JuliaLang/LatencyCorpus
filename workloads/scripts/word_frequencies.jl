@@ -1,5 +1,5 @@
 # env: base
-# kind: latency
+# kind: interactive
 # about: Text processing script: count words in a generated corpus, report the most common.
 
 # %% setup

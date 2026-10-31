@@ -1,5 +1,5 @@
 # env: base
-# kind: mixed
+# kind: throughput
 # about: A hot loop over a heterogeneous container: every call is dynamically dispatched, so
 #   each call crosses the tier boundary.
 

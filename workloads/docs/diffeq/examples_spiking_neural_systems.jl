@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: examples/spiking_neural_systems.md
 
 # %% 1

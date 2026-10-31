@@ -1,5 +1,5 @@
 # env: data
-# kind: unknown
+# kind: interactive
 # source: man/markdown/markdown_examples.md
 
 # %% 1

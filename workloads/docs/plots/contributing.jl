@@ -1,5 +1,5 @@
 # env: plots
-# kind: unknown
+# kind: interactive
 # source: contributing.md
 
 # %% prelude

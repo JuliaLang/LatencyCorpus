@@ -1,5 +1,5 @@
 # env: base
-# kind: latency
+# kind: interactive
 # about: One generic function called on many argument types, each only a few times.
 
 # %% types

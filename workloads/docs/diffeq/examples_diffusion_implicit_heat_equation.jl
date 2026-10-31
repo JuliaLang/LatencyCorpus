@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: examples/diffusion_implicit_heat_equation.md
 
 # %% 1

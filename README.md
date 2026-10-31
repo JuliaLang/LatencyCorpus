@@ -15,8 +15,8 @@ code from package documentation and is not meant for publishing as is.
   - `sciml`: ModelingToolkit, OrdinaryDiffEq, DifferentialEquations and friends
   - `bench`: BaseBenchmarks and BenchmarkTools
 - `workloads/` — one file per workload, split into cells by `# %%` lines; each cell is one
-  REPL input. Header lines: `# env:` (required), `# kind:` (`latency`, `throughput`,
-  `mixed` or `unknown`), `# args:` (extra Julia options), `# source:` or `# about:`.
+  REPL input. Header lines: `# env:` (required), `# kind:` (`interactive`, `overcompile` or
+  `throughput`: the class the workload is judged as, see `runner/summarize.jl`), `# args:` (extra Julia options), `# source:` or `# about:`.
   - `docs/<package>/` — documentation pages turned into sessions by
     `runner/extract_docs.jl`, one page per workload, with cells that fail even without
     tiering pruned by `runner/prune.jl` (marked `# pruned`)

@@ -1,5 +1,5 @@
 # env: makie
-# kind: unknown
+# kind: interactive
 # source: tutorials/pixel-perfect-rendering.md
 
 # %% prelude

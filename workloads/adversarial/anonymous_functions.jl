@@ -1,5 +1,5 @@
 # env: base
-# kind: latency
+# kind: interactive
 # about: Higher-order functions with fresh closures at each input, as typed at a REPL.
 
 # %% data

@@ -1,5 +1,5 @@
 # env: sciml
-# kind: unknown
+# kind: interactive
 # source: tutorials/sde_example.md
 
 # %% 1

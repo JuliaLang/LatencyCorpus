@@ -1,5 +1,5 @@
 # env: makie
-# kind: unknown
+# kind: interactive
 # source: tutorials/getting-started.md
 
 # %% prelude
