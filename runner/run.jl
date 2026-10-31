@@ -81,7 +81,7 @@ function run_one(julia, path, mode, rep, timeout, out)
         "JULIA_PKG_PRECOMPILE_AUTO" => "0",
         "CORPUS_DATA" => joinpath(ROOT, "data"),
     ), mode_env, endswith(mode, "+log") ? Dict("JULIA_TIER_LOG" =>
-        joinpath(out, "compile", replace(name, '/' => '-') * "-$base_mode-$rep.tsv")) : Dict());
+        joinpath(abspath(out), "compile", replace(name, '/' => '-') * "-$base_mode-$rep.tsv")) : Dict());
         dir=dirname(cells))
     t0 = time()
     proc = run(pipeline(ignorestatus(cmd); stdout=log, stderr=log))
