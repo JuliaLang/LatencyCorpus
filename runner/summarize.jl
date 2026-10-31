@@ -1,10 +1,12 @@
 # Summarize a run.jl run that has both modes:
 #
-#     julia runner/summarize.jl [--base MODE] [--new MODE] <results dir>... [worst N]
+#     julia runner/summarize.jl [--base MODE] [--new MODE] [--reps R,...] <results dir>... [worst N]
 #
 # compares mode `--new` (default `on`) against `--base` (default `off`; use `master` for the
-# baseline build). Several results directories are merged, so a stored baseline run can be
-# compared with a later run of the build under test.
+# baseline build). `--reps` keeps only the given repetitions: the first repetition after a
+# build runs with a cold objcache, as a user's first session after installing or updating
+# Julia does, and later ones with a warm one. Several results directories are merged, so a
+# stored baseline run can be compared with a later run of the build under test.
 #
 # Cells are judged by class (see `classify`), each by its own measure: interactive cells by
 # perceptual bands, over-compilation by time and compile time, throughput as a pass or fail
@@ -22,6 +24,7 @@ end
 
 const BASE = Ref("off")
 const NEW = Ref("on")
+const REPS = Ref{Union{Nothing,Set{String}}}(nothing)  # `--reps 2,3`: only these repetitions
 
 function load(dirs)
     rows = Dict{Tuple{String,String,String},Vector{Row}}()  # (mode, workload, cell)
@@ -29,6 +32,7 @@ function load(dirs)
     for dir in dirs, l in eachline(joinpath(dir, "results.tsv"))
         f = split(l, '\t')
         mode, workload, cell = f[1], f[3], f[4]
+        REPS[] === nothing || f[2] in REPS[] || continue
         if cell == "process"
             status[(mode, workload)] = f[9]
         end
@@ -208,6 +212,7 @@ function parse_args(args)
     while i <= length(args)
         a = args[i]
         if a == "--base"; BASE[] = args[i += 1]
+        elseif a == "--reps"; REPS[] = Set(split(args[i += 1], ','))
         elseif a == "--new"; NEW[] = args[i += 1]
         elseif isdir(a); push!(dirs, a)
         else worst = parse(Int, a)
