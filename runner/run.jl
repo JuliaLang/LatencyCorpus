@@ -34,6 +34,7 @@ const MODES = Dict(
     "delay1000" => (TIERED, Dict("JULIA_JIT_DELAY" => "1000")),
     "cost" => (TIERED, Dict("JULIA_TIER_CI_COST" => "30000")),
     "cost1000" => (TIERED, Dict("JULIA_TIER_CI_COST" => "30000", "JULIA_JIT_DELAY" => "1000")),
+    "inbounds" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1")),
 )
 const OUTPUT_LOCK = ReentrantLock()
 
