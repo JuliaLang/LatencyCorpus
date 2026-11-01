@@ -1,12 +1,13 @@
 # List the cells where tiered execution turns a slow interactive step into a quick one:
 #
-#     julia runner/showcases.jl [--base MODE] [--new MODE] [--min S] [--ratio R] <results dir>...
+#     julia runner/showcases.jl [--base MODE] [--new MODE] [--min S] [--ratio R] [--reps R,...] <results dir>...
 #
 # prints a Markdown table of the cells that take at least `--min` seconds (default 1) in mode
 # `--base` (default `master`) and run at least `--ratio` times (default 4) faster in mode
 # `--new` (default `on`), fastest speedup first, with the first line of code of each cell.
 # Times for repeated runs are averaged; the slowest run of each is shown too, since the first
-# run in a fresh depot is often much slower.
+# run in a fresh depot is often much slower. `--reps` keeps only the given repetitions (see
+# summarize.jl).
 using Statistics, Printf
 
 function cellcode(workload, cell)
@@ -27,7 +28,7 @@ function cellcode(workload, cell)
 end
 
 function main(args)
-    base, new, lo, ratio, dirs = "master", "on", 1.0, 4.0, String[]
+    base, new, lo, ratio, dirs, reps = "master", "on", 1.0, 4.0, String[], nothing
     i = 1
     while i <= length(args)
         a = args[i]
@@ -35,6 +36,8 @@ function main(args)
             v = args[i += 1]
             a == "--base" ? (base = v) : a == "--new" ? (new = v) :
             a == "--min" ? (lo = parse(Float64, v)) : (ratio = parse(Float64, v))
+        elseif a == "--reps"
+            reps = Set(split(args[i += 1], ','))
         else
             push!(dirs, a)
         end
@@ -44,6 +47,7 @@ function main(args)
     for dir in dirs, l in eachline(joinpath(dir, "results.tsv"))
         f = split(l, '\t')
         (f[1] == "mode" || f[4] in ("process", "load")) && continue
+        reps === nothing || f[2] in reps || continue
         # leave out time in `using` and `import`, where recorded (see summarize.jl)
         load = length(f) in (11, 24) ? something(tryparse(Float64, f[11]), 0.0) : 0.0
         push!(get!(t, (f[1], f[3], f[4]), Float64[]), parse(Float64, f[5]) - load)
