@@ -29,13 +29,24 @@ const TIERED = ["--tiered=yes"]
 const MODES = Dict(
     "off" => (String[], Dict{String,String}()),
     "on" => (TIERED, Dict{String,String}()),
+    "oncold" => (TIERED, Dict("JULIA_OBJCACHE" => "0")),
     "master" => (String[], Dict{String,String}()),
     "delay500" => (TIERED, Dict("JULIA_JIT_DELAY" => "500")),
     "delay1000" => (TIERED, Dict("JULIA_JIT_DELAY" => "1000")),
     "cost" => (TIERED, Dict("JULIA_TIER_CI_COST" => "30000")),
     "cost1000" => (TIERED, Dict("JULIA_TIER_CI_COST" => "30000", "JULIA_JIT_DELAY" => "1000")),
     "inbounds" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1")),
+    # Compile traces (`JULIA_COMPILE_TRACE`, written to <out>/trace/; see trace.jl): what
+    # compiling costs, with no object cache so that every module pays for LLVM, and with
+    # it; how often compiled code runs; and what interpreting costs, with budgets large
+    # enough that hot code stays interpreted long enough to measure.
+    "trace" => (String[], Dict("JULIA_OBJCACHE" => "0")),
+    "wtrace" => (String[], Dict{String,String}()),
+    "counts" => (String[], Dict("JULIA_COMPILE_TRACE_COUNTS" => "1")),
+    "itrace" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_WORK" => "1000000",
+                              "JULIA_TIER_LOOP" => "1000000")),
 )
+const TRACED = ("trace", "wtrace", "counts", "itrace")
 const OUTPUT_LOCK = ReentrantLock()
 
 function header(path::String, key::String)
@@ -82,7 +93,9 @@ function run_one(julia, path, mode, rep, timeout, out)
         "JULIA_PKG_PRECOMPILE_AUTO" => "0",
         "CORPUS_DATA" => joinpath(ROOT, "data"),
     ), mode_env, endswith(mode, "+log") ? Dict("JULIA_TIER_LOG" =>
-        joinpath(abspath(out), "compile", replace(name, '/' => '-') * "-$base_mode-$rep.tsv")) : Dict());
+        joinpath(abspath(out), "compile", replace(name, '/' => '-') * "-$base_mode-$rep.tsv")) : Dict(),
+        base_mode in TRACED ? Dict("JULIA_COMPILE_TRACE" =>
+        joinpath(abspath(out), "trace", replace(name, '/' => '-') * "-$base_mode-$rep.trace")) : Dict());
         dir=dirname(cells))
     t0 = time()
     proc = run(pipeline(ignorestatus(cmd); stdout=log, stderr=log))
@@ -122,6 +135,7 @@ function main(args)
     end
     mkpath(joinpath(out, "logs"))
     any(m -> endswith(m, "+log"), modes) && mkpath(joinpath(out, "compile"))
+    any(in(TRACED), modes) && mkpath(joinpath(out, "trace"))
     # Alternate modes within each repetition, so drift in machine load affects both alike.
     runs = [(path, mode, rep) for rep in 1:reps for path in workloads(paths) for mode in modes]
     asyncmap(r -> run_one((julia, master), r..., timeout, out), runs; ntasks=jobs)

@@ -96,6 +96,9 @@ end
 
 const start_jit_delay = isdefined(Base, :Tiered) && isdefined(Base.Tiered, :start_jit_delay) ?
     Base.Tiered.start_jit_delay : () -> nothing
+# Marks in the compile trace (`JULIA_COMPILE_TRACE`), where the build has one.
+const trace_mark = isdefined(Base, :Tiered) && isdefined(Base.Tiered, :trace_mark) ?
+    Base.Tiered.trace_mark : (_) -> nothing
 
 isload(ex) = Meta.isexpr(ex, (:using, :import))
 
@@ -111,8 +114,9 @@ function eval_cell(code::String, path::String)
             Core.eval(Main, st)  # throws the parse error
         end
         t = time_ns()
+        isload(st) && trace_mark("load")
         value = Core.eval(Main, REPL.softscope(st))
-        isload(st) && (load += (time_ns() - t) / 1e9)
+        isload(st) && (trace_mark("loaded"); load += (time_ns() - t) / 1e9)
     end
     return value, load
 end
@@ -128,6 +132,7 @@ function run_cell(cell::Cell, path::String)
     io = IOContext(IOBuffer(), :limit => true, :displaysize => (24, 80), :color => false)
     failure = nothing
     load = 0.0
+    trace_mark("cell " * cell.name)
     start_jit_delay()
     try
         value, load = eval_cell(code, path)
@@ -143,6 +148,7 @@ function run_cell(cell::Cell, path::String)
         Base.invokelatest(showerror, io, failure...)
     end
     t1 = time_ns()
+    trace_mark("end " * cell.name)
     c1 = Base.cumulative_compile_time_ns()
     phases = round.(phase_counters() .- p0; digits=4)
     alloc = Base.GC_Diff(Base.gc_num(), stats).allocd
