@@ -174,6 +174,13 @@ function main(path::String, out::String)
             flush(io)
         end
     end
+    # what compiling each interpreted specialization would have cost (see run.jl, rtrace)
+    if get(ENV, "CORPUS_COMPILE_INTERPRETED", "") == "1" && isdefined(Base, :Tiered) &&
+            isdefined(Base.Tiered, :trace_compile_interpreted)
+        trace_mark("compile interpreted")
+        Base.Tiered.trace_compile_interpreted()
+        trace_mark("compiled interpreted")
+    end
 end
 
 main(ARGS[1], ARGS[2])

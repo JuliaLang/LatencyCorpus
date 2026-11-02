@@ -45,8 +45,17 @@ const MODES = Dict(
     "counts" => (String[], Dict("JULIA_COMPILE_TRACE_COUNTS" => "1")),
     "itrace" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_WORK" => "1000000",
                               "JULIA_TIER_LOOP" => "1000000")),
+    # itrace, and then what compiling each specialization that ran interpreted costs
+    # (see `Tiered.trace_compile_interpreted`), which can be much more or less than
+    # compiling it from compiled callers, as the trace mode does, and what each inlines
+    "rtrace" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_WORK" => "1000000",
+                              "JULIA_TIER_LOOP" => "1000000", "CORPUS_COMPILE_INTERPRETED" => "1",
+                              "JULIA_COMPILE_TRACE_COUNTS" => "2",
+                              "JULIA_OBJCACHE" => "0")),
+    # tiering as it is, traced, to see what it compiles
+    "ontrace" => (TIERED, Dict{String,String}()),
 )
-const TRACED = ("trace", "wtrace", "counts", "itrace")
+const TRACED = ("trace", "wtrace", "counts", "itrace", "rtrace", "ontrace")
 const OUTPUT_LOCK = ReentrantLock()
 
 function header(path::String, key::String)
@@ -88,7 +97,7 @@ function run_one(julia, path, mode, rep, timeout, out)
     cmd = `timeout $timeout $julia --startup-file=no $opts $args --project=$(joinpath(ROOT, "envs", env))
            $(joinpath(ROOT, "runner", "cells.jl")) $(abspath(path)) $cells`
     cmd = setenv(cmd, merge(ENV, Dict(
-        "JULIA_DEPOT_PATH" => joinpath(ROOT, "depot"),
+        "JULIA_DEPOT_PATH" => get(ENV, "CORPUS_DEPOT", joinpath(ROOT, "depot")),
         "GKSwstype" => "100",            # GR without a display
         "JULIA_PKG_PRECOMPILE_AUTO" => "0",
         "CORPUS_DATA" => joinpath(ROOT, "data"),
@@ -135,7 +144,7 @@ function main(args)
     end
     mkpath(joinpath(out, "logs"))
     any(m -> endswith(m, "+log"), modes) && mkpath(joinpath(out, "compile"))
-    any(in(TRACED), modes) && mkpath(joinpath(out, "trace"))
+    any(m -> replace(m, r"\+log$" => "") in TRACED, modes) && mkpath(joinpath(out, "trace"))
     # Alternate modes within each repetition, so drift in machine load affects both alike.
     runs = [(path, mode, rep) for rep in 1:reps for path in workloads(paths) for mode in modes]
     asyncmap(r -> run_one((julia, master), r..., timeout, out), runs; ntasks=jobs)

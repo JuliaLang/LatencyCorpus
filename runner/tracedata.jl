@@ -38,13 +38,18 @@ mutable struct Trace
     roots::Vector{Tuple{Int,Int,Int,String}}   # (t0, t1, s, why)
     marks::Vector{Mark}
     calls::Dict{Int,Vector{Int}}               # c => directly called cs
-    interp::Dict{Int,NTuple{5,Int}}            # s => (calls, stmts, backedges, incl, excl)
+    deps::Dict{Int,Vector{Int}}                # c => CodeInstances its inference used
+    depmis::Dict{Int,Vector{Int}}              # c => MethodInstances its inference used
+    interp::Dict{Int,NTuple{7,Int}}            # s => (calls, stmts, backedges, incl, excl, native, compiled)
+    interp_hist::Dict{Int,Vector{Tuple{Int,NTuple{7,Int}}}}  # s => [(marks seen before, totals)]
+    edges::Dict{Tuple{Int,Int},Vector{Tuple{Int,NTuple{5,Int}}}}  # (caller or -1, callee) =>
+                                               # [(marks seen before, (calls, stmts, excl, native, compiled))]
     fns::Dict{Int,Fn}                          # q => function
     counts::Dict{Int,Vector{Tuple{Int,Vector{Int}}}}  # q => [(marks seen before, counts)]
 end
 
 Trace(path, mode) = Trace(path, mode, Dict(), Dict(), Dict(), Dict(), [], [], [], [], Dict(),
-                          Dict(), Dict(), Dict())
+                          Dict(), Dict(), Dict(), Dict(), Dict(), Dict(), Dict())
 
 const P = s -> parse(Int, s)
 splitints(s) = isempty(s) ? Int[] : P.(split(s, ','))
@@ -75,10 +80,21 @@ function read_trace(path::String, mode::String="")
             push!(t.roots, (P(f[2]), P(f[3]), P(f[4]), f[5]))
         elseif k == "x"
             push!(t.marks, Mark(P(f[2]), join(f[3:end], '\t')))
+        elseif k == "d"
+            cs = Int[]; ss = Int[]
+            for x in split(get(f, 3, ""), ',', keepempty=false)
+                push!(x[1] == 'c' ? cs : ss, P(x[2:end]))
+            end
+            t.deps[P(f[2])] = cs; t.depmis[P(f[2])] = ss
         elseif k == "g"
             t.calls[P(f[2])] = splitints(f[3])
         elseif k == "p"
-            t.interp[P(f[2])] = (P(f[3]), P(f[4]), P(f[5]), P(f[6]), P(f[7]))
+            v = (P(f[3]), P(f[4]), P(f[5]), P(f[6]), P(f[7]), P(f[8]), length(f) > 8 ? P(f[9]) : 0)
+            t.interp[P(f[2])] = v
+            push!(get!(t.interp_hist, P(f[2]), Tuple{Int,NTuple{7,Int}}[]), (length(t.marks), v))
+        elseif k == "a"
+            e = (f[2] == "-" ? -1 : P(f[2]), P(f[3]))
+            push!(get!(t.edges, e, Tuple{Int,NTuple{5,Int}}[]), (length(t.marks), (P(f[4]), P(f[5]), P(f[6]), P(f[7]), length(f) > 7 ? P(f[8]) : 0)))
         elseif k == "b"
             q = P(f[2])
             fnci[q] = P(f[3])
@@ -128,6 +144,46 @@ function cells(t::Trace)
         end
     end
     return out
+end
+
+# The latest of a history of cumulative values recorded before `k` marks had been written,
+# or nothing.
+function hist_at(h, k::Int)
+    c = nothing
+    for (seen, v) in h
+        seen < k || break
+        c = v
+    end
+    return c
+end
+
+# Per cell, what ran interpreted: by signature, (calls, stmts, backedges, incl, excl,
+# native, compiled), and by (caller signature or "", callee signature), (calls, stmts, excl,
+# native, compiled).
+function cell_interp(t::Trace)
+    bysig = Dict{String,Dict{String,NTuple{7,Int}}}()
+    byedge = Dict{String,Dict{Tuple{String,String},NTuple{5,Int}}}()
+    for (name, _, _, i0, i1) in cells(t)
+        a = Dict{String,NTuple{7,Int}}()
+        for (s, h) in t.interp_hist
+            v1 = hist_at(h, i1)
+            v1 === nothing && continue
+            v0 = something(hist_at(h, i0), ntuple(_ -> 0, 7))
+            d = v1 .- v0
+            d[1] > 0 && (a[sig(t, s)] = d)
+        end
+        bysig[name] = a
+        b = Dict{Tuple{String,String},NTuple{5,Int}}()
+        for ((p, c), h) in t.edges
+            v1 = hist_at(h, i1)
+            v1 === nothing && continue
+            v0 = something(hist_at(h, i0), ntuple(_ -> 0, 5))
+            d = v1 .- v0
+            d[1] > 0 && (b[(p < 0 ? "" : sig(t, p), sig(t, c))] = d)
+        end
+        byedge[name] = b
+    end
+    return bysig, byedge
 end
 
 # The counts of function q once `k` marks had been written (the start of a cell is mark
