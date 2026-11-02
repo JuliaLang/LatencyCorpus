@@ -52,6 +52,9 @@ Trace(path, mode) = Trace(path, mode, Dict(), Dict(), Dict(), Dict(), [], [], []
                           Dict(), Dict(), Dict(), Dict(), Dict(), Dict(), Dict())
 
 const P = s -> parse(Int, s)
+# Interpreter times, which come out negative (wrapped) when tasks switch on a thread inside an
+# interpreted frame: count those as 0.
+const T = s -> (v = parse(UInt64, s); v > typemax(Int) ? 0 : Int(v))
 splitints(s) = isempty(s) ? Int[] : P.(split(s, ','))
 
 function read_trace(path::String, mode::String="")
@@ -89,12 +92,12 @@ function read_trace(path::String, mode::String="")
         elseif k == "g"
             t.calls[P(f[2])] = splitints(f[3])
         elseif k == "p"
-            v = (P(f[3]), P(f[4]), P(f[5]), P(f[6]), P(f[7]), P(f[8]), length(f) > 8 ? P(f[9]) : 0)
+            v = (P(f[3]), P(f[4]), P(f[5]), T(f[6]), T(f[7]), T(f[8]), length(f) > 8 ? T(f[9]) : 0)
             t.interp[P(f[2])] = v
             push!(get!(t.interp_hist, P(f[2]), Tuple{Int,NTuple{7,Int}}[]), (length(t.marks), v))
         elseif k == "a"
             e = (f[2] == "-" ? -1 : P(f[2]), P(f[3]))
-            push!(get!(t.edges, e, Tuple{Int,NTuple{5,Int}}[]), (length(t.marks), (P(f[4]), P(f[5]), P(f[6]), P(f[7]), length(f) > 7 ? P(f[8]) : 0)))
+            push!(get!(t.edges, e, Tuple{Int,NTuple{5,Int}}[]), (length(t.marks), (P(f[4]), P(f[5]), T(f[6]), T(f[7]), length(f) > 7 ? T(f[8]) : 0)))
         elseif k == "b"
             q = P(f[2])
             fnci[q] = P(f[3])
