@@ -31,11 +31,18 @@ const MODES = Dict(
     "on" => (TIERED, Dict{String,String}()),
     "oncold" => (TIERED, Dict("JULIA_OBJCACHE" => "0")),
     "master" => (String[], Dict{String,String}()),
+    "mastercold" => (String[], Dict("JULIA_OBJCACHE" => "0")),
     "delay500" => (TIERED, Dict("JULIA_JIT_DELAY" => "500")),
     "delay1000" => (TIERED, Dict("JULIA_JIT_DELAY" => "1000")),
     "cost" => (TIERED, Dict("JULIA_TIER_CI_COST" => "30000")),
     "cost1000" => (TIERED, Dict("JULIA_TIER_CI_COST" => "30000", "JULIA_JIT_DELAY" => "1000")),
     "inbounds" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1")),
+    # the budget scaled by the method's lowered size (JULIA_TIER_STMT_COST), with `@inbounds`
+    # code interpreted
+    "sized300" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_STMT_COST" => "300")),
+    "sized100" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_STMT_COST" => "100")),
+    "sized300cold" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_STMT_COST" => "300",
+                                    "JULIA_OBJCACHE" => "0")),
     # Compile traces (`JULIA_COMPILE_TRACE`, written to <out>/trace/; see trace.jl): what
     # compiling costs, with no object cache so that every module pays for LLVM, and with
     # it; how often compiled code runs; and what interpreting costs, with budgets large
@@ -54,8 +61,12 @@ const MODES = Dict(
                               "JULIA_OBJCACHE" => "0")),
     # tiering as it is, traced, to see what it compiles
     "ontrace" => (TIERED, Dict{String,String}()),
+    "sizedcounts" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_STMT_COST" => "300",
+                                   "JULIA_COMPILE_TRACE_COUNTS" => "1")),
+    "sizedtrace" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_STMT_COST" => "300",
+                                  "JULIA_OBJCACHE" => "0")),
 )
-const TRACED = ("trace", "wtrace", "counts", "itrace", "rtrace", "ontrace")
+const TRACED = ("trace", "wtrace", "counts", "itrace", "rtrace", "ontrace", "sizedtrace", "sizedcounts")
 const OUTPUT_LOCK = ReentrantLock()
 
 function header(path::String, key::String)
@@ -87,7 +98,7 @@ end
 
 function run_one(julia, path, mode, rep, timeout, out)
     base_mode = replace(mode, r"\+log$" => "")
-    julia = julia[base_mode == "master" ? 2 : 1]
+    julia = julia[startswith(base_mode, "master") ? 2 : 1]
     opts, mode_env = MODES[base_mode]
     env = something(header(path, "env"), "base")
     name = workload_name(path)
