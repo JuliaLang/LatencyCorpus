@@ -58,30 +58,50 @@ family(w) = split(w, '/')[1] == "docs" ? w : first(split(w, '/'))
 # knob that makes it run arbitrarily long, may take a while. Compute-bound cells inside other
 # workloads are marked by hand with `# throughput: <cell>` header lines. Cells that only load
 # packages (`prelude` and `load`) are reported apart, since tiering can't change them.
-const CLASSES = Dict{String,Tuple{String,Set{String}}}()
+const CLASSES = Dict{String,Tuple{String,Set{String},Bool}}()
 
 function workload_class(w)
     get!(CLASSES, w) do
         dir = joinpath(@__DIR__, "..", "workloads")
         file = joinpath(dir, w * ".jl")
         isfile(file) || (file = joinpath(dir, "docs", w * ".jl"))
-        class, thr = "interactive", Set{String}()
-        isfile(file) || return (class, thr)
+        class, thr, script = "interactive", Set{String}(), false
+        isfile(file) || return (class, thr, script)
         for l in eachline(file)
             if (m = match(r"^# kind: *(\w+)", l)) !== nothing
                 class = String(m[1])
             elseif (m = match(r"^# throughput: *(.*?)\s*$", l)) !== nothing
                 push!(thr, m[1])
+            elseif match(r"^# mode: *script\b", l) !== nothing
+                script = true
             end
         end
-        return (class, thr)
+        return (class, thr, script)
     end
 end
 
+# A script (`# mode: script`) runs end to end, so only its process's wall time matters.
+is_script(w) = workload_class(w)[3]
+
 function classify(workload, cell)
     cell in ("prelude", "load") && return "loading"
+    is_script(workload) && return "script"
     class, thr = workload_class(workload)
     return cell in thr ? "throughput" : class in ("overcompile", "throughput") ? class : "interactive"
+end
+
+# Scripts: end-to-end wall time of the whole process, the only measure for them.
+function scripts(rows, workloads)
+    ws = [w for w in workloads if is_script(w) && haskey(rows, (NEW[], w, "process"))]
+    isempty(ws) && return
+    r = Float64[]
+    println("\nScripts (end-to-end wall time):")
+    for w in ws
+        a, b = avg(rows[(BASE[], w, "process")], x -> x.wall), avg(rows[(NEW[], w, "process")], x -> x.wall)
+        push!(r, b / a)
+        @printf("    %-80s %8.3f → %8.3f s  (%.2fx)\n", w, a, b, b / a)
+    end
+    @printf("  geomean %s/%s %.3f\n", NEW[], BASE[], geomean(r))
 end
 
 band(t) = t < 0.3 ? 1 : t < 1.0 ? 2 : 3
@@ -174,7 +194,7 @@ function main(dirs, worst=15)
     @printf("  %-14s %5d %10.1f %10.1f %8.3f\n", "all", sum(length, values(fam)), tot_off, tot_on, tot_on / tot_off)
 
     # Cells, judged by class (see `classify`)
-    cells = Dict(c => Tuple{String,Float64,Float64,Float64,Float64}[] for c in ("interactive", "overcompile", "throughput", "loading"))
+    cells = Dict(c => Tuple{String,Float64,Float64,Float64,Float64}[] for c in ("interactive", "overcompile", "throughput", "loading", "script"))
     mismatches = String[]
     for k in keys(rows)
         k[1] == BASE[] && k[3] != "process" || continue
@@ -186,6 +206,7 @@ function main(dirs, worst=15)
         push!(cells[class], ("$(k[2]) | $(k[3])", off, on, avg(a, r -> r.compile), avg(b, r -> r.compile)))
         all(r -> r.ok, a) && all(r -> r.ok, b) && a[1].shown != b[1].shown && push!(mismatches, "$(k[2]) | $(k[3])")
     end
+    scripts(rows, workloads)
     interactive(cells["interactive"], worst)
     overcompile(cells["overcompile"], worst)
     throughput(cells["throughput"], worst)

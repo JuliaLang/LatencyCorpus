@@ -17,7 +17,9 @@ code from package documentation and is not meant for publishing as is.
 - `workloads/` — one file per workload, split into cells by `# %%` lines; each cell is one
   REPL input. Header lines: `# env:` (required), `# kind:` (`interactive`, `overcompile` or
   `throughput`: the class the workload is judged as, see `runner/summarize.jl`), `# throughput: <cell>`
-  (a compute-bound cell in a workload of another class), `# args:` (extra Julia options), `# source:` or `# about:`.
+  (a compute-bound cell in a workload of another class), `# mode: script` (an end-to-end script,
+  judged only by its process's wall time; other workloads are REPL sessions), `# args:` (extra
+  Julia options), `# source:` or `# about:`.
   - `docs/<package>/` — documentation pages turned into sessions by
     `runner/extract_docs.jl`, one page per workload, with cells that fail even without
     tiering pruned by `runner/prune.jl` (marked `# pruned`)
@@ -33,7 +35,10 @@ code from package documentation and is not meant for publishing as is.
 
 ## Running
 
-    julia runner/run.jl [--modes off,on] [--reps N] [--jobs N] [--timeout S] [--out DIR] paths...
+    julia runner/run.jl [--modes off,on] [--reps N] [--jobs N] [--timeout S] [--think S] [--out DIR] paths...
+
+`--think S` pauses S seconds between the cells of a session, as a user reading and typing would,
+outside every cell's time; scripts run straight through.
 
 Each run is a fresh process in an empty temporary directory, with the workload's
 environment. `runner/cells.jl` evaluates the cells in `Main` with the REPL's soft scope,

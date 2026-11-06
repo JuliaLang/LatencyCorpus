@@ -1,5 +1,6 @@
 # env: base
 # kind: interactive
+# mode: script
 # about: Text processing script: count words in a generated corpus, report the most common.
 
 # %% setup

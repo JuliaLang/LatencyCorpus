@@ -1,7 +1,7 @@
 # Run corpus workloads in fresh processes, with tiering off and on:
 #
 #     julia runner/run.jl [--julia PATH] [--master PATH] [--modes off,on] [--reps N]
-#                         [--timeout S] [--jobs N] [--out DIR] workload_or_dir...
+#                         [--timeout S] [--jobs N] [--think S] [--out DIR] workload_or_dir...
 #
 # Modes `off` and `on` run the Julia under test (`--julia`) without and with tiering; mode
 # `master` runs the baseline build (`--master`, by default ~/dev/julia-master), which is
@@ -122,6 +122,9 @@ end
 
 objcache_dir(out, mode) = joinpath(abspath(out), "objcache", mode)
 
+# Seconds of think time between the cells of a session (`--think`); scripts run straight through.
+const THINK = Ref(0.0)
+
 function run_one(julia, path, mode, rep, timeout, out)
     base_mode = replace(mode, r"\+log$" => "")
     julia = julia[startswith(base_mode, "master") ? 2 : 1]
@@ -153,7 +156,8 @@ function run_one(julia, path, mode, rep, timeout, out)
         # what ran before. The first repetition fills it, as a user's first session does.
         get(ENV, "CORPUS_SHARED_OBJCACHE", "") == "1" ? Dict() : Dict(
         "JULIA_OBJCACHE_PATH" => objcache_dir(out, base_mode),
-        "JULIA_OBJCACHE_CAPACITY" => string(32 << 30)));
+        "JULIA_OBJCACHE_CAPACITY" => string(32 << 30)),
+        THINK[] > 0 && header(path, "mode") != "script" ? Dict("CORPUS_THINK" => string(THINK[])) : Dict());
         dir=dirname(cells))
     t0 = time()
     proc = run(pipeline(ignorestatus(cmd); stdout=log, stderr=log))
@@ -189,6 +193,7 @@ function main(args)
         elseif a == "--timeout"; timeout = parse(Int, args[i += 1])
         elseif a == "--out"; out = args[i += 1]
         elseif a == "--jobs"; jobs = parse(Int, args[i += 1])
+        elseif a == "--think"; THINK[] = parse(Float64, args[i += 1])
         else push!(paths, a)
         end
         i += 1

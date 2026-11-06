@@ -1,5 +1,6 @@
 # env: base
 # kind: interactive
+# mode: script
 # about: Data-analysis script with only stdlibs: summary statistics, regression, a report.
 
 # %% data

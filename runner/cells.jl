@@ -189,8 +189,13 @@ function main(path::String, out::String)
     name = joinpath(basename(dirname(abspath(path))), splitext(basename(path))[1])
     Base.cumulative_compile_timing(true)
     Random.seed!(0)
+    # A REPL user's think time between inputs (CORPUS_THINK, seconds; see run.jl --think),
+    # which is in no cell's time: work the session left running in the background, such as
+    # compiling, goes on meanwhile, as it would while the user reads and types.
+    think = parse(Float64, get(ENV, "CORPUS_THINK", "0"))
     open(out, "a") do io
-        for cell in read_cells(path)
+        for (i, cell) in enumerate(read_cells(path))
+            i > 1 && think > 0 && sleep(think)
             wall, comp, recomp, alloc, ok, shown, load, phases = run_cell(cell, path)
             println(io, join((name, cell.name, round(wall; digits=4), round(comp; digits=4),
                 round(recomp; digits=4), alloc, ok, shown, round(load; digits=4), phases...), '\t'))

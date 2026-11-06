@@ -1,5 +1,6 @@
 # env: base
 # kind: throughput
+# mode: script
 # about: Numerical script: Monte Carlo estimates in loops, each run once.
 
 # %% pi
