@@ -59,6 +59,22 @@ const MODES = Dict(
                               "JULIA_TIER_LOOP" => "1000000", "CORPUS_COMPILE_INTERPRETED" => "1",
                               "JULIA_COMPILE_TRACE_COUNTS" => "2",
                               "JULIA_OBJCACHE" => "0")),
+    # tiering with `@inbounds` code interpreted (the settled rule), traced with a warm object
+    # cache, to see where interactive cells spend their time
+    "inbtrace" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1")),
+    # budgets that count what callees interpret (JULIA_TIER_INCLUSIVE): fixed, only through
+    # call sites that reached one callee (JULIA_TIER_MONO), and scaled by what compiling the
+    # callees with the caller would cost (JULIA_TIER_SUBTREE_COST)
+    "incl" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_INCLUSIVE" => "1")),
+    "inclmono" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_INCLUSIVE" => "1",
+        "JULIA_TIER_MONO" => "1")),
+    "inclsub300" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_INCLUSIVE" => "1",
+        "JULIA_TIER_SUBTREE_COST" => "300")),
+    "inclsub100" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_INCLUSIVE" => "1",
+        "JULIA_TIER_SUBTREE_COST" => "100")),
+    "incltrace" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_INCLUSIVE" => "1")),
+    "inclsubtrace" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_INCLUSIVE" => "1",
+        "JULIA_TIER_SUBTREE_COST" => "300")),
     # tiering as it is, traced, to see what it compiles
     "ontrace" => (TIERED, Dict{String,String}()),
     "sizedcounts" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_STMT_COST" => "300",
@@ -66,7 +82,7 @@ const MODES = Dict(
     "sizedtrace" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_STMT_COST" => "300",
                                   "JULIA_OBJCACHE" => "0")),
 )
-const TRACED = ("trace", "wtrace", "counts", "itrace", "rtrace", "ontrace", "sizedtrace", "sizedcounts")
+const TRACED = ("trace", "wtrace", "inbtrace", "counts", "itrace", "rtrace", "ontrace", "sizedtrace", "sizedcounts", "incltrace", "inclsubtrace")
 const OUTPUT_LOCK = ReentrantLock()
 
 function header(path::String, key::String)
