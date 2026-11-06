@@ -151,7 +151,13 @@ function run_cell(cell::Cell, path::String)
     trace_mark("end " * cell.name)
     c1 = Base.cumulative_compile_time_ns()
     phases = round.(phase_counters() .- p0; digits=4)
-    alloc = Base.GC_Diff(Base.gc_num(), stats).allocd
+    gcdiff = Base.GC_Diff(Base.gc_num(), stats)
+    alloc = gcdiff.allocd
+    # GC time per cell, where asked for (CORPUS_GC_LOG=<file>): workload, cell, seconds, pauses
+    gclog = get(ENV, "CORPUS_GC_LOG", "")
+    isempty(gclog) || open(gclog, "a") do f
+        println(f, path, '\t', cell.name, '\t', gcdiff.total_time / 1e9, '\t', gcdiff.pause)
+    end
     ok = failure === nothing
     shown = string(hash(take!(io.io)); base=16)
     if !ok
