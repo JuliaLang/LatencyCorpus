@@ -72,6 +72,12 @@ const MODES = Dict(
         "JULIA_TIER_SUBTREE_COST" => "300")),
     "inclsub100" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_INCLUSIVE" => "1",
         "JULIA_TIER_SUBTREE_COST" => "100")),
+    # budgets capped at k statements per lowered statement (JULIA_TIER_SMALL_COST), so small
+    # methods compile sooner, on top of inbounds and of inclsub300
+    "small100" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_SMALL_COST" => "100")),
+    "small1000" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_SMALL_COST" => "1000")),
+    "inclsmall100" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_INCLUSIVE" => "1",
+        "JULIA_TIER_SUBTREE_COST" => "300", "JULIA_TIER_SMALL_COST" => "100")),
     "incltrace" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_INCLUSIVE" => "1")),
     "inclsubtrace" => (TIERED, Dict("JULIA_TIER_INBOUNDS" => "1", "JULIA_TIER_INCLUSIVE" => "1",
         "JULIA_TIER_SUBTREE_COST" => "300")),
@@ -112,6 +118,8 @@ function workloads(args::Vector{String})
     return files
 end
 
+objcache_dir(out, mode) = joinpath(abspath(out), "objcache", mode)
+
 function run_one(julia, path, mode, rep, timeout, out)
     base_mode = replace(mode, r"\+log$" => "")
     julia = julia[startswith(base_mode, "master") ? 2 : 1]
@@ -137,7 +145,13 @@ function run_one(julia, path, mode, rep, timeout, out)
         joinpath(abspath(out), "gc", replace(name, '/' => '-') * "-$mode-$rep.tsv")) : Dict(),
         # and the main thread's performance counters per cell (see perfcounters.jl)
         haskey(ENV, "CORPUS_PERF_LOG") ? Dict("CORPUS_PERF_LOG" =>
-        joinpath(abspath(out), "perf", replace(name, '/' => '-') * "-$mode-$rep.tsv")) : Dict());
+        joinpath(abspath(out), "perf", replace(name, '/' => '-') * "-$mode-$rep.tsv")) : Dict(),
+        # An object cache per mode, large enough that nothing is evicted: a cache shared by
+        # every mode and build holds less than the corpus compiles, so what hits depended on
+        # what ran before. The first repetition fills it, as a user's first session does.
+        get(ENV, "CORPUS_SHARED_OBJCACHE", "") == "1" ? Dict() : Dict(
+        "JULIA_OBJCACHE_PATH" => objcache_dir(out, base_mode),
+        "JULIA_OBJCACHE_CAPACITY" => string(32 << 30)));
         dir=dirname(cells))
     t0 = time()
     proc = run(pipeline(ignorestatus(cmd); stdout=log, stderr=log))
@@ -182,6 +196,8 @@ function main(args)
     any(m -> replace(m, r"\+log$" => "") in TRACED, modes) && mkpath(joinpath(out, "trace"))
     haskey(ENV, "CORPUS_GC_LOG") && mkpath(joinpath(out, "gc"))
     haskey(ENV, "CORPUS_PERF_LOG") && mkpath(joinpath(out, "perf"))
+    get(ENV, "CORPUS_SHARED_OBJCACHE", "") == "1" ||
+        foreach(m -> mkpath(objcache_dir(out, replace(m, r"\+log$" => ""))), modes)
     # Alternate modes within each repetition, so drift in machine load affects both alike.
     runs = [(path, mode, rep) for rep in 1:reps for path in workloads(paths) for mode in modes]
     asyncmap(r -> run_one((julia, master), r..., timeout, out), runs; ntasks=jobs)
