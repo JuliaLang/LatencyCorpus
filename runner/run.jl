@@ -29,6 +29,8 @@ const TIERED = ["--tiered=yes"]
 const MODES = Dict(
     "off" => (String[], Dict{String,String}()),
     "on" => (TIERED, Dict{String,String}()),
+    # tiering's defaults, but compiling on the thread that spends a budget, not in the background
+    "onsync" => (TIERED, Dict("JULIA_TIER_BACKGROUND" => "0")),
     "oncold" => (TIERED, Dict("JULIA_OBJCACHE" => "0")),
     "master" => (String[], Dict{String,String}()),
     "mastercold" => (String[], Dict("JULIA_OBJCACHE" => "0")),

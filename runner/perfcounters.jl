@@ -8,7 +8,7 @@
 # to multiplex the hardware counters.
 module PerfCounters
 
-export open_counters, read_counters, counter_names
+export open_counters, read_counters, counter_names, process_cpu
 
 const PERF_TYPE_HARDWARE = UInt32(0)
 const PERF_TYPE_SOFTWARE = UInt32(1)
@@ -59,6 +59,14 @@ function open_counters()
         push!(fds, fd)
     end
     return Counters(fds)
+end
+
+# User and system CPU time of the whole process, all threads, in seconds (getrusage): unlike the
+# counters, this includes work other threads do, such as compiling in the background.
+function process_cpu()
+    ru = zeros(Int64, 18) # struct rusage; ru_utime and ru_stime (timevals) come first
+    ccall(:getrusage, Cint, (Cint, Ptr{Int64}), 0, ru) == 0 || return (NaN, NaN)
+    return (ru[1] + ru[2] / 1e6, ru[3] + ru[4] / 1e6)
 end
 
 function read_counters(pc::Counters)
