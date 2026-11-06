@@ -36,6 +36,7 @@ mutable struct Trace
     emits::Vector{Tuple{Int,Int,Vector{Tuple{Int,Int,Int}}}}  # (t, ns, [(c, instrs, ns)])
     objs::Vector{Tuple{Int,Int,Int,Bool,Int,Vector{Int}}}     # (t, ns, llvm, hit, link, cs)
     roots::Vector{Tuple{Int,Int,Int,String}}   # (t0, t1, s, why)
+    rootmeta::Vector{Tuple{Int,Int}}           # by root: (thread id, time queued), or (-1, t0) in older traces
     marks::Vector{Mark}
     calls::Dict{Int,Vector{Int}}               # c => directly called cs
     deps::Dict{Int,Vector{Int}}                # c => CodeInstances its inference used
@@ -48,7 +49,7 @@ mutable struct Trace
     counts::Dict{Int,Vector{Tuple{Int,Vector{Int}}}}  # q => [(marks seen before, counts)]
 end
 
-Trace(path, mode) = Trace(path, mode, Dict(), Dict(), Dict(), Dict(), [], [], [], [], Dict(),
+Trace(path, mode) = Trace(path, mode, Dict(), Dict(), Dict(), Dict(), [], [], [], [], [], Dict(),
                           Dict(), Dict(), Dict(), Dict(), Dict(), Dict(), Dict())
 
 const P = s -> parse(Int, s)
@@ -81,6 +82,7 @@ function read_trace(path::String, mode::String="")
             push!(t.objs, (P(f[2]), P(f[3]), P(f[4]), f[5] == "1", P(f[6]), splitints(f[7])))
         elseif k == "r"
             push!(t.roots, (P(f[2]), P(f[3]), P(f[4]), f[5]))
+            push!(t.rootmeta, length(f) >= 7 ? (P(f[6]), P(f[7])) : (-1, P(f[2])))
         elseif k == "x"
             push!(t.marks, Mark(P(f[2]), join(f[3:end], '\t')))
         elseif k == "d"
