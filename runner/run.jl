@@ -138,7 +138,9 @@ function run_one(julia, path, mode, rep, timeout, out)
     wall = time() - t0
     rows = isfile(cells) ? readlines(cells) : String[]
     failed = count(r -> split(r, '\t')[7] == "false", rows)
+    # `timeout` passes on a signal that killed Julia by dying of it itself
     status = proc.exitcode == 124 ? "timeout" : proc.exitcode != 0 ? "exit$(proc.exitcode)" :
+        proc.termsignal != 0 ? "signal$(proc.termsignal)" :
         failed == 0 ? "ok" : "$failed/$(length(rows)) cells failed"
     @lock OUTPUT_LOCK open(joinpath(out, "results.tsv"), "a") do io
         for r in rows
