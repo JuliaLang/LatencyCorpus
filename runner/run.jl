@@ -131,7 +131,13 @@ function run_one(julia, path, mode, rep, timeout, out)
     ), mode_env, endswith(mode, "+log") ? Dict("JULIA_TIER_LOG" =>
         joinpath(abspath(out), "compile", replace(name, '/' => '-') * "-$base_mode-$rep.tsv")) : Dict(),
         base_mode in TRACED ? Dict("JULIA_COMPILE_TRACE" =>
-        joinpath(abspath(out), "trace", replace(name, '/' => '-') * "-$base_mode-$rep.trace")) : Dict());
+        joinpath(abspath(out), "trace", replace(name, '/' => '-') * "-$base_mode-$rep.trace")) : Dict(),
+        # GC time per cell (see cells.jl), in a file per run, where asked for
+        haskey(ENV, "CORPUS_GC_LOG") ? Dict("CORPUS_GC_LOG" =>
+        joinpath(abspath(out), "gc", replace(name, '/' => '-') * "-$mode-$rep.tsv")) : Dict(),
+        # and the main thread's performance counters per cell (see perfcounters.jl)
+        haskey(ENV, "CORPUS_PERF_LOG") ? Dict("CORPUS_PERF_LOG" =>
+        joinpath(abspath(out), "perf", replace(name, '/' => '-') * "-$mode-$rep.tsv")) : Dict());
         dir=dirname(cells))
     t0 = time()
     proc = run(pipeline(ignorestatus(cmd); stdout=log, stderr=log))
@@ -174,6 +180,8 @@ function main(args)
     mkpath(joinpath(out, "logs"))
     any(m -> endswith(m, "+log"), modes) && mkpath(joinpath(out, "compile"))
     any(m -> replace(m, r"\+log$" => "") in TRACED, modes) && mkpath(joinpath(out, "trace"))
+    haskey(ENV, "CORPUS_GC_LOG") && mkpath(joinpath(out, "gc"))
+    haskey(ENV, "CORPUS_PERF_LOG") && mkpath(joinpath(out, "perf"))
     # Alternate modes within each repetition, so drift in machine load affects both alike.
     runs = [(path, mode, rep) for rep in 1:reps for path in workloads(paths) for mode in modes]
     asyncmap(r -> run_one((julia, master), r..., timeout, out), runs; ntasks=jobs)

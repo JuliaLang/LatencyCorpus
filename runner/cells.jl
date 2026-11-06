@@ -27,6 +27,8 @@
 
 import REPL
 import Random
+include(joinpath(@__DIR__, "perfcounters.jl"))
+using .PerfCounters
 
 struct Cell
     name::String
@@ -126,6 +128,7 @@ function run_cell(cell::Cell, path::String)
     code = "\n"^(cell.line - 1) * cell.code
     show_value = displays(cell.code)
     stats = Base.gc_num()
+    pc0 = PERF[] === nothing ? nothing : read_counters(PERF[])
     c0 = Base.cumulative_compile_time_ns()
     p0 = phase_counters()
     t0 = time_ns()
@@ -151,12 +154,19 @@ function run_cell(cell::Cell, path::String)
     trace_mark("end " * cell.name)
     c1 = Base.cumulative_compile_time_ns()
     phases = round.(phase_counters() .- p0; digits=4)
+    pc1 = PERF[] === nothing ? nothing : read_counters(PERF[])
     gcdiff = Base.GC_Diff(Base.gc_num(), stats)
     alloc = gcdiff.allocd
     # GC time per cell, where asked for (CORPUS_GC_LOG=<file>): workload, cell, seconds, pauses
     gclog = get(ENV, "CORPUS_GC_LOG", "")
     isempty(gclog) || open(gclog, "a") do f
         println(f, path, '\t', cell.name, '\t', gcdiff.total_time / 1e9, '\t', gcdiff.pause)
+    end
+    # this thread's performance counters per cell, where asked for (CORPUS_PERF_LOG=<file>):
+    # workload, cell, then the change in each of `counter_names()`
+    perflog = get(ENV, "CORPUS_PERF_LOG", "")
+    isempty(perflog) || pc0 === nothing || open(perflog, "a") do f
+        println(f, path, '\t', cell.name, '\t', join(round.(Int, pc1 .- pc0), '\t'))
     end
     ok = failure === nothing
     shown = string(hash(take!(io.io)); base=16)
@@ -168,7 +178,11 @@ function run_cell(cell::Cell, path::String)
     return (t1 - t0) / 1e9, (c1[1] - c0[1]) / 1e9, (c1[2] - c0[2]) / 1e9, alloc, ok, shown, load, phases
 end
 
+# Opened before the first cell, where the counters can be (see perfcounters.jl).
+const PERF = Ref{Union{Nothing,PerfCounters.Counters}}(nothing)
+
 function main(path::String, out::String)
+    isempty(get(ENV, "CORPUS_PERF_LOG", "")) || (PERF[] = open_counters())
     name = joinpath(basename(dirname(abspath(path))), splitext(basename(path))[1])
     Base.cumulative_compile_timing(true)
     Random.seed!(0)
