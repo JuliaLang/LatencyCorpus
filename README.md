@@ -55,6 +55,8 @@ mode, which comparisons should be against; the modes are defined at the top of
 its first repetition: the first repetition is cold, as a first session is, and later ones
 are warm with only what that workload compiled before, as when a session is repeated. No
 cache is shared between workloads, so results do not depend on the order runs happen in.
+Before timing anything, read [AGENTS.md](AGENTS.md): it is written for coding agents, but its
+rules for keeping the object cache from distorting results apply to anyone measuring.
 
 `--think S` pauses S seconds between the cells of a session, as a user reading and typing would,
 outside every cell's time; scripts run straight through.
