@@ -120,7 +120,8 @@ function workloads(args::Vector{String})
     return files
 end
 
-objcache_dir(out, mode) = joinpath(abspath(out), "objcache", mode)
+# The object cache of one workload's runs in one mode (see run_workload)
+objcache_dir(out, name, mode) = joinpath(abspath(out), "objcache", replace(name, '/' => '-'), mode)
 
 # Seconds of think time between the cells of a session (`--think`); scripts run straight through.
 const THINK = Ref(0.0)
@@ -151,11 +152,10 @@ function run_one(julia, path, mode, rep, timeout, out)
         # and the main thread's performance counters per cell (see perfcounters.jl)
         haskey(ENV, "CORPUS_PERF_LOG") ? Dict("CORPUS_PERF_LOG" =>
         joinpath(abspath(out), "perf", replace(name, '/' => '-') * "-$mode-$rep.tsv")) : Dict(),
-        # An object cache per mode, large enough that nothing is evicted: a cache shared by
-        # every mode and build holds less than the corpus compiles, so what hits depended on
-        # what ran before. The first repetition fills it, as a user's first session does.
+        # An object cache of this workload's own in this mode, large enough that nothing is
+        # evicted (see run_workload)
         get(ENV, "CORPUS_SHARED_OBJCACHE", "") == "1" ? Dict() : Dict(
-        "JULIA_OBJCACHE_PATH" => objcache_dir(out, base_mode),
+        "JULIA_OBJCACHE_PATH" => objcache_dir(out, name, base_mode),
         "JULIA_OBJCACHE_CAPACITY" => string(32 << 30)),
         THINK[] > 0 && header(path, "mode") != "script" ? Dict("CORPUS_THINK" => string(THINK[])) : Dict());
         dir=dirname(cells))
@@ -175,6 +175,26 @@ function run_one(julia, path, mode, rep, timeout, out)
         println(io, join((mode, rep, name, "process", round(wall; digits=4), "", "", "", status, ""), '\t'))
     end
     @lock OUTPUT_LOCK println(rpad(name, 48), " ", rpad(mode, 9), "rep $rep  ", lpad(round(wall; digits=2), 7), "s  ", status)
+end
+
+# Run one workload in each mode, `reps` times. Each mode has an object cache of the workload's
+# own, empty before the first repetition, so that the first is cold, as a first session is
+# (and every session after Julia is upgraded), and the later ones warm with only what this
+# workload compiled before, as when a session is repeated. A cache shared with other
+# workloads would hit on whatever they happened to compile before, which depends on the order
+# and concurrency of runs and differs between builds that group code into modules
+# differently. The caches are removed afterwards (unless CORPUS_KEEP_OBJCACHE=1): the
+# corpus compiles more than fits on disk at once.
+function run_workload(julia, path, modes, reps, timeout, out)
+    name = workload_name(path)
+    shared = get(ENV, "CORPUS_SHARED_OBJCACHE", "") == "1"
+    shared || foreach(m -> mkpath(objcache_dir(out, name, replace(m, r"\+log$" => ""))), modes)
+    # Alternate modes within each repetition, so drift in machine load affects both alike.
+    for rep in 1:reps, mode in modes
+        run_one(julia, path, mode, rep, timeout, out)
+    end
+    shared || get(ENV, "CORPUS_KEEP_OBJCACHE", "") == "1" ||
+        rm(dirname(objcache_dir(out, name, "")); recursive=true, force=true)
 end
 
 function main(args)
@@ -203,11 +223,8 @@ function main(args)
     any(m -> replace(m, r"\+log$" => "") in TRACED, modes) && mkpath(joinpath(out, "trace"))
     haskey(ENV, "CORPUS_GC_LOG") && mkpath(joinpath(out, "gc"))
     haskey(ENV, "CORPUS_PERF_LOG") && mkpath(joinpath(out, "perf"))
-    get(ENV, "CORPUS_SHARED_OBJCACHE", "") == "1" ||
-        foreach(m -> mkpath(objcache_dir(out, replace(m, r"\+log$" => ""))), modes)
-    # Alternate modes within each repetition, so drift in machine load affects both alike.
-    runs = [(path, mode, rep) for rep in 1:reps for path in workloads(paths) for mode in modes]
-    asyncmap(r -> run_one((julia, master), r..., timeout, out), runs; ntasks=jobs)
+    asyncmap(p -> run_workload((julia, master), p, modes, reps, timeout, out), workloads(paths);
+             ntasks=jobs)
     println("results in ", out)
 end
 

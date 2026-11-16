@@ -51,8 +51,10 @@ before measuring it.
 
 `--julia` is the build under test and `--master` the baseline build, run by the `master`
 mode, which comparisons should be against; the modes are defined at the top of
-`runner/run.jl`. Each mode gets its own object cache, empty at the start of the run, so
-the first repetition of each workload is cold and later ones warm.
+`runner/run.jl`. Each workload gets an object cache of its own in each mode, empty before
+its first repetition: the first repetition is cold, as a first session is, and later ones
+are warm with only what that workload compiled before, as when a session is repeated. No
+cache is shared between workloads, so results do not depend on the order runs happen in.
 
 `--think S` pauses S seconds between the cells of a session, as a user reading and typing would,
 outside every cell's time; scripts run straight through.
