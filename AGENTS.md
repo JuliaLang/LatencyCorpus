@@ -49,6 +49,11 @@ that workload's own output and nothing else. Report the two separately; never av
   code emitted in the iteration order of a map keyed by pointers.
 - **Reproduce a surprising result in a fresh process before believing it**, with nothing but
   the workload's cells, and the cache state it ran with.
+- **Output that differs between builds is not by itself a change in behavior.** Some packages
+  show collections in hash order, and a type's hash mixes in the build ID its module got when
+  it was precompiled, so two builds, or one build precompiled twice, can show the same values
+  in different orders (ModelingToolkit's parameters, for one). Before calling a difference a
+  regression, precompile one build again and see whether its own output changes too.
 - **Judge each class of workload by its own goal** (`runner/summarize.jl`): interactive
   latency, not compiling pointless code (overcompile), and no loss of throughput. Never by
   total wall time across the corpus, which the overcompile workloads dominate.
