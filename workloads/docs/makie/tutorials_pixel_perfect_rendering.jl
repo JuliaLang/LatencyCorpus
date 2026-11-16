@@ -1,6 +1,7 @@
 # env: makie
 # kind: interactive
-# source: tutorials/pixel-perfect-rendering.md
+# source: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/docs/src/tutorials/pixel-perfect-rendering.md
+# license: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/LICENSE.md
 
 # %% prelude
 using CairoMakie

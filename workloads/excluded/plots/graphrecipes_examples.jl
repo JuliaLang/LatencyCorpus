@@ -1,6 +1,7 @@
 # env: plots
 # kind: unknown
-# source: GraphRecipes/examples.md
+# source: https://github.com/JuliaPlots/Plots.jl/blob/Plots-v1.41.7/docs/src/GraphRecipes/examples.md
+# license: https://github.com/JuliaPlots/Plots.jl/blob/Plots-v1.41.7/Plots/LICENSE.md
 
 # %% prelude
 using Plots

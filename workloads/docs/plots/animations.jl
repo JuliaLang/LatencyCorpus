@@ -1,6 +1,7 @@
 # env: plots
 # kind: interactive
-# source: animations.md
+# source: https://github.com/JuliaPlots/Plots.jl/blob/Plots-v1.41.7/docs/src/animations.md
+# license: https://github.com/JuliaPlots/Plots.jl/blob/Plots-v1.41.7/Plots/LICENSE.md
 # throughput: 2
 # throughput: 3
 # throughput: 4

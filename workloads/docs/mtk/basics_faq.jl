@@ -1,6 +1,7 @@
 # env: sciml
 # kind: overcompile
-# source: basics/FAQ.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/basics/FAQ.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 
 # %% 1
 using ModelingToolkit

@@ -1,6 +1,7 @@
 # env: makie
 # kind: unknown
-# source: reference/plots/mesh.md
+# source: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/docs/src/reference/plots/mesh.md
+# license: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/LICENSE.md
 
 # %% prelude
 using CairoMakie

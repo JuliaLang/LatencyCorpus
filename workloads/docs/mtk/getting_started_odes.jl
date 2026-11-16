@@ -1,6 +1,7 @@
 # env: sciml
 # kind: overcompile
-# source: getting_started/odes.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/getting_started/odes.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 
 # %% 1
 using ModelingToolkit

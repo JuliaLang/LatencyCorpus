@@ -1,6 +1,7 @@
 # env: sciml
 # kind: unknown
-# source: tutorials/dynamic_optimization.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/tutorials/dynamic_optimization.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 
 # %% 1
 using ModelingToolkit, OrdinaryDiffEq

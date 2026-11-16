@@ -1,6 +1,7 @@
 # env: data
 # kind: unknown
-# source: man/text/text_examples.md
+# source: https://github.com/ronisbr/PrettyTables.jl/blob/v3.5.0/docs/src/man/text/text_examples.md
+# license: https://github.com/ronisbr/PrettyTables.jl/blob/v3.5.0/LICENSE.txt
 
 # %% 1
 A = Any[

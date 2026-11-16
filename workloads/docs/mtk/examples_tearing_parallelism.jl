@@ -1,6 +1,7 @@
 # env: sciml
 # kind: overcompile
-# source: examples/tearing_parallelism.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/examples/tearing_parallelism.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 
 # %% 1
 using ModelingToolkit, OrdinaryDiffEq

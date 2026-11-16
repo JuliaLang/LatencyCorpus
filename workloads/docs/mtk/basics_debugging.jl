@@ -1,6 +1,7 @@
 # env: sciml
 # kind: overcompile
-# source: basics/Debugging.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/basics/Debugging.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 
 # %% 1
 using ModelingToolkit, OrdinaryDiffEq

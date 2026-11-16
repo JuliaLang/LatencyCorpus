@@ -1,6 +1,6 @@
 # Turn the runnable examples in Documenter markdown into corpus workloads:
 #
-#     julia runner/extract_docs.jl [--prelude CODE] <env> <outdir> <docs dir or .md file>...
+#     julia runner/extract_docs.jl [--prelude CODE] [--url URL] [--license URL] <env> <outdir> <docs dir or .md file>...
 #
 # Documenter runs `@example`, `@repl` and `@setup` blocks at docs-build time and checks
 # `jldoctest` blocks; Makie's docs add `@figure` blocks, which are `@example` blocks that
@@ -9,8 +9,10 @@
 # `@example`/`@setup`/`@figure` block is one cell, and each input of a `@repl` block or a
 # `julia>` prompt of a `jldoctest` is one cell. `--prelude` adds a first cell, for setup
 # the docs build does implicitly (`using CairoMakie` for `@figure`). Workloads are written
-# as <outdir>/<page>.jl with `env`, `source` and `kind` header lines; `kind` is left as
-# `unknown`, to be set once the workload has been run.
+# as <outdir>/<page>.jl with `env`, `source`, `license` and `kind` header lines; `kind` is
+# left as `unknown`, to be set once the workload has been run. `--url` is the address of the
+# docs directory at the version extracted from (each page's `source` is that followed by the
+# page's path), and `--license` that of the license the documentation is under.
 
 struct Block
     kind::Symbol     # :example, :setup, :figure, :repl or :doctest
@@ -84,14 +86,15 @@ keep(c) = !isempty(strip(c)) && !occursin(r"run\(`|ansitoimg|pdflatex|`convert |
 
 slug(s) = strip(replace(lowercase(s), r"[^a-z0-9]+" => "_"), '_')
 
-function extract(env::String, outdir::String, page::String, root::String, prelude)
+function extract(env::String, outdir::String, page::String, root::String, prelude, url, license)
     cs = [c for b in blocks(page) for c in cells(b) if keep(c)]
     isempty(cs) && return 0
     rel = relpath(page, root)
     open(joinpath(outdir, slug(splitext(rel)[1]) * ".jl"), "w") do io
         println(io, "# env: ", env)
         println(io, "# kind: unknown")
-        println(io, "# source: ", rel)
+        println(io, "# source: ", something(url, ""), rel)
+        license === nothing || println(io, "# license: ", license)
         prelude === nothing || println(io, "\n# %% prelude\n", prelude)
         for (i, c) in enumerate(cs)
             println(io, "\n# %% ", i)
@@ -102,10 +105,14 @@ function extract(env::String, outdir::String, page::String, root::String, prelud
 end
 
 function main(args)
-    prelude = nothing
-    if args[1] == "--prelude"
-        prelude = args[2]
-        args = args[3:end]
+    prelude = url = license = nothing
+    while startswith(args[1], "--")
+        opt, val, args = args[1], args[2], args[3:end]
+        if opt == "--prelude"; prelude = val
+        elseif opt == "--url"; url = val
+        elseif opt == "--license"; license = val
+        else error("unknown option: ", opt)
+        end
     end
     env, outdir = args[1], args[2]
     mkpath(outdir)
@@ -113,10 +120,10 @@ function main(args)
     for a in args[3:end]
         if isdir(a)
             for (dir, _, fs) in walkdir(a), f in sort(fs)
-                endswith(f, ".md") && (total += extract(env, outdir, joinpath(dir, f), a, prelude))
+                endswith(f, ".md") && (total += extract(env, outdir, joinpath(dir, f), a, prelude, url, license))
             end
         else
-            total += extract(env, outdir, a, dirname(a), prelude)
+            total += extract(env, outdir, a, dirname(a), prelude, url, license)
         end
     end
     println("wrote $total workloads to $outdir")

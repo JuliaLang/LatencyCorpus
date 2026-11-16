@@ -1,6 +1,7 @@
 # env: sciml
 # kind: interactive
-# source: examples/diffusion_implicit_heat_equation.md
+# source: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/docs/src/examples/diffusion_implicit_heat_equation.md
+# license: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/LICENSE.md
 
 # %% 1
 import Plots: plot, plot!

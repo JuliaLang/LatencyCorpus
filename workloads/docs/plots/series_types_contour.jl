@@ -1,6 +1,7 @@
 # env: plots
 # kind: interactive
-# source: series_types/contour.md
+# source: https://github.com/JuliaPlots/Plots.jl/blob/Plots-v1.41.7/docs/src/series_types/contour.md
+# license: https://github.com/JuliaPlots/Plots.jl/blob/Plots-v1.41.7/Plots/LICENSE.md
 
 # %% prelude
 using Plots

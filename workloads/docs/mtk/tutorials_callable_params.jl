@@ -1,6 +1,7 @@
 # env: sciml
 # kind: overcompile
-# source: tutorials/callable_params.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/tutorials/callable_params.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 
 # %% 1
 using ModelingToolkit

@@ -1,6 +1,7 @@
 # env: makie
 # kind: unknown
-# source: reference/blocks/slidergrid.md
+# source: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/docs/src/reference/blocks/slidergrid.md
+# license: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/LICENSE.md
 
 # %% prelude
 using CairoMakie

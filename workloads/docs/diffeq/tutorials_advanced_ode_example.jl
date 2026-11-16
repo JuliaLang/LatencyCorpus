@@ -1,6 +1,7 @@
 # env: sciml
 # kind: interactive
-# source: tutorials/advanced_ode_example.md
+# source: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/docs/src/tutorials/advanced_ode_example.md
+# license: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/LICENSE.md
 # throughput: 5
 # throughput: 6
 # throughput: 7

@@ -1,6 +1,7 @@
 # env: sciml
 # kind: unknown
-# source: tutorials/fmi.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/tutorials/fmi.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 
 # %% 1
 # pruned: failed without tiering

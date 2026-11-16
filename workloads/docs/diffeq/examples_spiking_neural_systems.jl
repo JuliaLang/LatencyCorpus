@@ -1,6 +1,7 @@
 # env: sciml
 # kind: interactive
-# source: examples/spiking_neural_systems.md
+# source: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/docs/src/examples/spiking_neural_systems.md
+# license: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/LICENSE.md
 
 # %% 1
 import DifferentialEquations as DE

@@ -1,6 +1,7 @@
 # env: sciml
 # kind: unknown
-# source: examples/min_and_max.md
+# source: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/docs/src/examples/min_and_max.md
+# license: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/LICENSE.md
 
 # %% 1
 #Constants and setup

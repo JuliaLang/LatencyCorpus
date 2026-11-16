@@ -1,6 +1,7 @@
 # env: data
 # kind: interactive
-# source: man/customizing_output.md
+# source: https://github.com/JuliaData/DataFrames.jl/blob/v1.8.2/docs/src/man/customizing_output.md
+# license: https://github.com/JuliaData/DataFrames.jl/blob/v1.8.2/LICENSE.md
 
 # %% 1
 using DataFrames

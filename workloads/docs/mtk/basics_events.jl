@@ -1,6 +1,7 @@
 # env: sciml
 # kind: overcompile
-# source: basics/Events.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/basics/Events.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 
 # %% 1
 using ModelingToolkit, OrdinaryDiffEq, Plots

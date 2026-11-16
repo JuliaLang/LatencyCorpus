@@ -1,6 +1,7 @@
 # env: makie
 # kind: interactive
-# source: reference/plots/voronoiplot.md
+# source: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/docs/src/reference/plots/voronoiplot.md
+# license: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/LICENSE.md
 # throughput: 6
 
 # %% prelude

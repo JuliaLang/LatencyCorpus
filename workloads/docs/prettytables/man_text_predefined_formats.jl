@@ -1,6 +1,7 @@
 # env: data
 # kind: interactive
-# source: man/text/predefined_formats.md
+# source: https://github.com/ronisbr/PrettyTables.jl/blob/v3.5.0/docs/src/man/text/predefined_formats.md
+# license: https://github.com/ronisbr/PrettyTables.jl/blob/v3.5.0/LICENSE.txt
 
 # %% 1
 using PrettyTables

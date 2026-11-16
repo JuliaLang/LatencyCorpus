@@ -1,6 +1,7 @@
 # env: sciml
 # kind: interactive
-# source: examples/outer_solar_system.md
+# source: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/docs/src/examples/outer_solar_system.md
+# license: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/LICENSE.md
 # throughput: 3
 
 # %% 1

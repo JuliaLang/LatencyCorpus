@@ -1,6 +1,7 @@
 # env: plots
 # kind: interactive
-# source: Plots.jl src/examples.jl (Plots._examples), GR backend
+# source: https://github.com/JuliaPlots/Plots.jl/blob/Plots-v1.41.7/Plots/src/examples.jl (Plots._examples), GR backend
+# license: https://github.com/JuliaPlots/Plots.jl/blob/Plots-v1.41.7/Plots/LICENSE.md
 
 # %% load
 using Plots

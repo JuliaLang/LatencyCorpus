@@ -1,6 +1,7 @@
 # env: sciml
 # kind: overcompile
-# source: tutorials/nonlinear.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/tutorials/nonlinear.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 
 # %% 1
 using ModelingToolkit, NonlinearSolve

@@ -1,6 +1,7 @@
 # env: plots
 # kind: interactive
-# source: attributes.md
+# source: https://github.com/JuliaPlots/Plots.jl/blob/Plots-v1.41.7/docs/src/attributes.md
+# license: https://github.com/JuliaPlots/Plots.jl/blob/Plots-v1.41.7/Plots/LICENSE.md
 
 # %% prelude
 using Plots

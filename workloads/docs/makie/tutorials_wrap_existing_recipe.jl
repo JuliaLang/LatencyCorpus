@@ -1,6 +1,7 @@
 # env: makie
 # kind: interactive
-# source: tutorials/wrap-existing-recipe.md
+# source: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/docs/src/tutorials/wrap-existing-recipe.md
+# license: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/LICENSE.md
 
 # %% prelude
 using CairoMakie

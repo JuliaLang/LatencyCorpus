@@ -1,6 +1,7 @@
 # env: data
 # kind: interactive
-# source: index.md
+# source: https://github.com/ronisbr/PrettyTables.jl/blob/v3.5.0/docs/src/index.md
+# license: https://github.com/ronisbr/PrettyTables.jl/blob/v3.5.0/LICENSE.txt
 
 # %% 1
 using PrettyTables

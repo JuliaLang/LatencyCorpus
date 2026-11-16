@@ -1,6 +1,7 @@
 # env: data
 # kind: interactive
-# source: man/categorical.md
+# source: https://github.com/JuliaData/DataFrames.jl/blob/v1.8.2/docs/src/man/categorical.md
+# license: https://github.com/JuliaData/DataFrames.jl/blob/v1.8.2/LICENSE.md
 
 # %% 1
 v = ["Group A", "Group A", "Group A", "Group B", "Group B", "Group B"]

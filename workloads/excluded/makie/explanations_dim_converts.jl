@@ -1,6 +1,7 @@
 # env: makie
 # kind: unknown
-# source: explanations/dim-converts.md
+# source: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/docs/src/explanations/dim-converts.md
+# license: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/LICENSE.md
 
 # %% prelude
 using CairoMakie

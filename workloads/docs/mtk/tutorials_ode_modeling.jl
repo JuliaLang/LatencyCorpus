@@ -1,6 +1,7 @@
 # env: sciml
 # kind: overcompile
-# source: tutorials/ode_modeling.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/tutorials/ode_modeling.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 # throughput: 17
 # throughput: 18
 # throughput: 19

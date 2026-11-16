@@ -1,6 +1,7 @@
 # env: sciml
 # kind: interactive
-# source: features/callback_functions.md
+# source: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/docs/src/features/callback_functions.md
+# license: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/LICENSE.md
 
 # %% 1
 import DifferentialEquations as DE

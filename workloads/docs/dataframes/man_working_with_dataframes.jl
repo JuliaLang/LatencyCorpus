@@ -1,6 +1,7 @@
 # env: data
 # kind: interactive
-# source: man/working_with_dataframes.md
+# source: https://github.com/JuliaData/DataFrames.jl/blob/v1.8.2/docs/src/man/working_with_dataframes.md
+# license: https://github.com/JuliaData/DataFrames.jl/blob/v1.8.2/LICENSE.md
 
 # %% 1
 using DataFrames

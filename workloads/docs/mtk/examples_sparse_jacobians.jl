@@ -1,6 +1,7 @@
 # env: sciml
 # kind: overcompile
-# source: examples/sparse_jacobians.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/examples/sparse_jacobians.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 # throughput: 4
 # throughput: 5
 # throughput: 6

@@ -1,6 +1,7 @@
 # env: makie
 # kind: interactive
-# source: reference/plots/ablines.md
+# source: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/docs/src/reference/plots/ablines.md
+# license: https://github.com/MakieOrg/Makie.jl/blob/v0.24.16/LICENSE.md
 
 # %% prelude
 using CairoMakie

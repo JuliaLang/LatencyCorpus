@@ -1,6 +1,7 @@
 # env: sciml
 # kind: overcompile
-# source: tutorials/acausal_components.md
+# source: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/docs/src/tutorials/acausal_components.md
+# license: https://github.com/SciML/ModelingToolkit.jl/blob/v11.46.1/LICENSE.md
 
 # %% 1
 using ModelingToolkit, Plots, OrdinaryDiffEq, Setfield

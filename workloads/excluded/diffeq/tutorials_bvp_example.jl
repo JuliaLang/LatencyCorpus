@@ -1,6 +1,7 @@
 # env: sciml
 # kind: unknown
-# source: tutorials/bvp_example.md
+# source: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/docs/src/tutorials/bvp_example.md
+# license: https://github.com/SciML/DiffEqDocs.jl/blob/2be200d2e925d9ddaa99cc9f38de808704d5c4b5/LICENSE.md
 
 # %% 1
 # pruned: failed without tiering
