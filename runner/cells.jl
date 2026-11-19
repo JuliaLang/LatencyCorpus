@@ -186,6 +186,10 @@ const PERF = Ref{Union{Nothing,PerfCounters.Counters}}(nothing)
 
 function main(path::String, out::String)
     isempty(get(ENV, "CORPUS_PERF_LOG", "")) || (PERF[] = open_counters())
+    # Compile the code that measures a cell before the first one is measured: a build that
+    # compiles a callee only when it is first called would otherwise compile it in that cell.
+    PERF[] === nothing || vcat(read_counters(PERF[]), process_cpu()...)
+    eval_cell("nothing", path)
     name = joinpath(basename(dirname(abspath(path))), splitext(basename(path))[1])
     Base.cumulative_compile_timing(true)
     Random.seed!(0)
