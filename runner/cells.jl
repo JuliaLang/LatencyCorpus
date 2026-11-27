@@ -123,7 +123,13 @@ function eval_cell(code::String, path::String)
     return value, load
 end
 
+# The measuring code runs compiled, as without tiering: interpreted, it would get hot over
+# the first cells and compile in the background during later ones.
+measuring!(on::Bool) = isdefined(Base, :Tiered) && isdefined(Base.Tiered, :compiled_tier!) &&
+    Base.Tiered.compiled_tier!(on)
+
 function run_cell(cell::Cell, path::String)
+    measuring!(true)
     # Pad with newlines so that line numbers in errors and backtraces match the file.
     code = "\n"^(cell.line - 1) * cell.code
     show_value = displays(cell.code)
@@ -131,6 +137,7 @@ function run_cell(cell::Cell, path::String)
     pc0 = PERF[] === nothing ? nothing : vcat(read_counters(PERF[]), process_cpu()...)
     c0 = Base.cumulative_compile_time_ns()
     p0 = phase_counters()
+    measuring!(false)
     t0 = time_ns()
     io = IOContext(IOBuffer(), :limit => true, :displaysize => (24, 80), :color => false)
     failure = nothing
@@ -151,6 +158,7 @@ function run_cell(cell::Cell, path::String)
         Base.invokelatest(showerror, io, failure...)
     end
     t1 = time_ns()
+    measuring!(true)
     trace_mark("end " * cell.name)
     c1 = Base.cumulative_compile_time_ns()
     phases = round.(phase_counters() .- p0; digits=4)
@@ -178,6 +186,7 @@ function run_cell(cell::Cell, path::String)
         Base.invokelatest(showerror, stderr, failure...)
         println(stderr)
     end
+    measuring!(false)
     return (t1 - t0) / 1e9, (c1[1] - c0[1]) / 1e9, (c1[2] - c0[2]) / 1e9, alloc, ok, shown, load, phases
 end
 
@@ -185,10 +194,12 @@ end
 const PERF = Ref{Union{Nothing,PerfCounters.Counters}}(nothing)
 
 function main(path::String, out::String)
+    measuring!(true)
     isempty(get(ENV, "CORPUS_PERF_LOG", "")) || (PERF[] = open_counters())
     # Compile the code that measures a cell before the first one is measured: a build that
     # compiles a callee only when it is first called would otherwise compile it in that cell.
     PERF[] === nothing || vcat(read_counters(PERF[]), process_cpu()...)
+    measuring!(false)
     eval_cell("nothing", path)
     name = joinpath(basename(dirname(abspath(path))), splitext(basename(path))[1])
     Base.cumulative_compile_timing(true)
